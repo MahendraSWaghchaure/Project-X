@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 import javax.persistence.*;
 import javax.validation.constraints.Pattern;
-;
+
 
 
 @Entity
