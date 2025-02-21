@@ -1,5 +1,5 @@
 package com.app.entities;
 
-public class Drivers {
-	
+public class Parents {
+
 }

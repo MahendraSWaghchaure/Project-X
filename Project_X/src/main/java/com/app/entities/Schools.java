@@ -1,41 +1,38 @@
 package com.app.entities;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 @Entity
+@Table(name= "Schools")
 public class Schools {
-	 @Id
-	    @GeneratedValue(strategy = GenerationType.IDENTITY)
-	    private Long schoolId;
-
-	    @OneToOne
-	    @JoinColumn(name = "student_id", nullable = false)
-	    private Students studentId;
-
-	    @Column(nullable = false)
-	    private String schoolName;
-
-	    @OneToMany
-	    @JoinColumn(name = "driver_id", nullable = false)
-	    private Drivers driverId;
-
-	    @OneToOne
-	    @JoinColumn(name = "parent_id", nullable = false)
-	    private Parents parentId;
+	@Id
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	private int schoolId;
+	private Students studentId;
+	
+	@Column(nullable =false)
+	private String SchoolName;
+	private Drivers driverId;
+	private Parents parentId;
 	
 	
-	public Schools(Long schoolId, Students studentId, String schoolName, Drivers driverId, Parents parentId) {
+	public Schools(int schoolId, Students studentId, String schoolName, Drivers driverId, Parents parentId) {
 		super();
 		this.schoolId = schoolId;
 		this.studentId = studentId;
-		this.schoolName = schoolName;
+		SchoolName = schoolName;
 		this.driverId = driverId;
 		this.parentId = parentId;
 	}
-	public Long getSchoolId() {
+	public int getSchoolId() {
 		return schoolId;
 	}
-	public void setSchoolId(Long schoolId) {
+	public void setSchoolId(int schoolId) {
 		this.schoolId = schoolId;
 	}
 	public Students getStudentId() {
@@ -45,10 +42,10 @@ public class Schools {
 		this.studentId = studentId;
 	}
 	public String getSchoolName() {
-		return schoolName;
+		return SchoolName;
 	}
 	public void setSchoolName(String schoolName) {
-		schoolName = schoolName;
+		SchoolName = schoolName;
 	}
 	public Drivers getDriverId() {
 		return driverId;
