@@ -15,7 +15,7 @@ public class Schools {
 	    @Column(nullable = false)
 	    private String schoolName;
 
-	    @OneToMany
+	    @OneToOne
 	    @JoinColumn(name = "driver_id", nullable = false)
 	    private Drivers driverId;
 

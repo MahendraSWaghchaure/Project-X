@@ -3,6 +3,8 @@ package com.app.controller;
 import java.util.List;
 import java.util.Optional;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -53,5 +55,14 @@ public class AdminController {
 	public ResponseEntity<Void> deleteAdmin(@PathVariable Long id) {
 		return adminservice.deleteAdmin(id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
 	}
+	
+	@GetMapping("/admin-only")
+	public ResponseEntity<String> adminOnly(HttpServletRequest request) {
+	    if (!"ADMIN".equals(request.getAttribute("role"))) {
+	        return ResponseEntity.status(403).body("Forbidden: Admins only");
+	    }
+	    return ResponseEntity.ok("Welcome, Admin!");
+	}
+
 
 }
