@@ -1,17 +1,15 @@
 //  Navbar/Footer for public pages
 
-import { Outlet } from "react-router-dom";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
+import { Outlet } from 'react-router-dom';
 
-const PublicLayout = () => (
-  <>
-    <Header />
-    <main className="p-4">
+const PublicLayout = () => {
+  return (
+    <div className="public-layout">
+      {/* Simple header/footer for public pages */}
       <Outlet />
-    </main>
-    <Footer />
-  </>
-);
+    </div>
+  );
+};
 
 export default PublicLayout;
+

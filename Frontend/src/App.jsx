@@ -1,25 +1,40 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import PublicLayout from "./layouts/PublicLayout";
-import Home from "./pages/public/Home";
-import About from "./pages/public/About";
-import Contact from "./pages/public/Contact";
-//import Login from "./pages/auth/Login"; // Example auth page
+import { Routes, Route } from 'react-router-dom';
+import PrivateRoute from './routes/PrivateRoute';
+import AdminDashboard from './pages/schoolAdmin/AdminDashboard';
+import DriverDashboard from './pages/driver/DriverDashboard';
+import ParentDashboard from './pages/parents/ParentDashboard';
+import Login from './pages/auth/Login';
+import Home from './pages/public/Home';
+// ... other imports
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Public Layout with nested routes */}
-        <Route element={<PublicLayout />}>
-          <Route path="/" element={<Home />} />         {/* ✅ This will be the first page shown */}
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-        </Route>
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
 
-        {/* Auth or role-specific routes can be added here */}
-        <Route path="/login" element={<Login />} />
-      </Routes>
-    </Router>
+      {/* Admin Protected Routes */}
+      <Route element={<PrivateRoute allowedRoles={['ADMIN']} />}>
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        {/* other admin routes */}
+      </Route>
+
+      {/* Driver Protected Routes */}
+      <Route element={<PrivateRoute allowedRoles={['DRIVER']} />}>
+        <Route path="/driver/dashboard" element={<DriverDashboard />} />
+        {/* other driver routes */}
+      </Route>
+
+      {/* Parent Protected Routes */}
+      <Route element={<PrivateRoute allowedRoles={['PARENT']} />}>
+        <Route path="/parent/dashboard" element={<ParentDashboard />} />
+        {/* other parent routes */}
+      </Route>
+
+      {/* Unauthorized Page */}
+      <Route path="/unauthorized" element={<div>Unauthorized Access</div>} />
+    </Routes>
   );
 }
 
