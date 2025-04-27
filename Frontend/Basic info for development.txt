@@ -1,0 +1,82 @@
+front
+
+
+📚 Second: Pages to create (by role)
+✅ Public Pages (pages/public/)
+Home.jsx
+
+About.jsx
+
+Contact.jsx
+
+TermsAndConditions.jsx (optional)
+
+FAQ.jsx (optional)
+
+✅ Authentication Pages (pages/auth/)
+Login.jsx
+
+Register.jsx (optional - mostly for drivers if needed)
+
+ForgotPassword.jsx (optional)
+
+✅ Parent Pages (pages/parents/)
+ParentDashboard.jsx
+
+TrackBus.jsx (live location map)
+
+StudentAttendance.jsx
+
+Notifications.jsx (bus delays, arrival notifications)
+
+✅ Admin Pages (pages/schoolAdmin/)
+AdminDashboard.jsx
+
+BusManagement.jsx (CRUD buses: Add, Edit, Delete)
+
+DriverManagement.jsx (CRUD drivers)
+
+StudentManagement.jsx (CRUD students)
+
+RouteManagement.jsx (Create/Edit routes for buses)
+
+✅ Driver Pages (pages/driver/)
+DriverDashboard.jsx
+
+AssignedRoute.jsx (show today's assigned route)
+
+Attendance.jsx (mark students as boarded/dropped)
+
+✅ Student Pages (pages/students/)
+StudentDashboard.jsx
+
+BusTracking.jsx (view their bus location in real-time)
+
+🚀 Bonus Suggestion (for Enterprise Level)
+✅ Real-time Location - (WebSocket or Firebase Live Update)
+✅ Push Notifications - (when bus arriving in 5 mins)
+✅ Role Based Access - (admin/parent/driver can't access others' pages)
+✅ Map Integration - (Google Maps, Leaflet.js)
+
+📦 Final Project Structure Idea (Short)
+bash
+Copy
+Edit
+src/
+ ├── assets/
+ ├── components/
+ ├── layouts/
+ ├── pages/
+ │   ├── auth/
+ │   ├── driver/
+ │   ├── parents/
+ │   ├── public/
+ │   ├── schoolAdmin/
+ │   ├── students/
+ ├── routes/
+ ├── services/ (for API calls)
+ ├── store/ (Redux, Zustand, or Context)
+ ├── types/ (TypeScript types)
+ ├── utils/ (Helper functions)
+ ├── App.jsx
+ ├── main.jsx

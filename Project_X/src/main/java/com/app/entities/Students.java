@@ -1,43 +1,23 @@
 package com.app.entities;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.Table;
 
 @Entity
-@Table(name="Students")
 public class Students {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	//One To One
-	private int studentId;
-	
-	@Column(nullable =false)
+	private Long studentId;
 	private String studentName;
-	
-	@Column(nullable =false)
-	//One To Many
 	private String studentSchool;
-	
-	@Column(nullable =false)
-	//One To One
 	private String studentClass;
-	
-	@Column(nullable =false)
 	private Parents parentId;
-	
-	@Column(nullable =false)
 	private Drivers driverId;
 	
-	@Column(nullable =false)
-	private String studentRefrenceNo;		//Unique field - No duplicates
 	
-	
-	public Students(int studentId, String studentName, String studentSchool, String studentClass, Parents parentId,
-			Drivers driverId, String studentRefrenceNo) {
+	public Students(Long studentId, String studentName, String studentSchool, String studentClass, Parents parentId,Drivers driverId) {
 		super();
 		this.studentId = studentId;
 		this.studentName = studentName;
@@ -45,21 +25,11 @@ public class Students {
 		this.studentClass = studentClass;
 		this.parentId = parentId;
 		this.driverId = driverId;
-		this.studentRefrenceNo = studentRefrenceNo;
 	}
-	
-	public String getStudentRefrenceNo() {
-		return studentRefrenceNo;
-	}
-
-	public void setStudentRefrenceNo(String studentRefrenceNo) {
-		this.studentRefrenceNo = studentRefrenceNo;
-	}
-
-	public int getStudentId() {
+	public Long getStudentId() {
 		return studentId;
 	}
-	public void setStudentId(int studentId) {
+	public void setStudentId(Long studentId) {
 		this.studentId = studentId;
 	}
 	public String getStudentName() {
