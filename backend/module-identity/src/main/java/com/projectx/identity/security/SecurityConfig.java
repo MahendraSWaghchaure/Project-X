@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -11,14 +12,16 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@EnableConfigurationProperties(CorsProperties.class)
+@EnableConfigurationProperties({CorsProperties.class, RateLimitProperties.class})
 public class SecurityConfig {
 
     private static final String[] PUBLIC_ENDPOINTS = {
@@ -36,11 +39,22 @@ public class SecurityConfig {
                                             ProjectXJwtAuthenticationConverter jwtAuthenticationConverter,
                                             RestAuthenticationEntryPoint authenticationEntryPoint,
                                             RestAccessDeniedHandler accessDeniedHandler,
-                                            CorsConfigurationSource corsConfigurationSource) throws Exception {
+                                            CorsConfigurationSource corsConfigurationSource,
+                                            RateLimitFilter rateLimitFilter) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Baseline hardening headers. HSTS/frame-options/content-type-sniffing protection are
+                // meaningless for a pure JSON API talking to a SPA on another origin, but actuator,
+                // swagger-ui, and error pages all still serve HTML from this same app, so they're
+                // real attack surface, not theater.
+                .headers(headers -> headers
+                        .contentTypeOptions(c -> {})
+                        .frameOptions(frame -> frame.deny())
+                        .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000))
+                        .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)))
+                .addFilterAfter(rateLimitFilter, CorsFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .anyRequest().authenticated())
@@ -50,6 +64,11 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler));
         return http.build();
+    }
+
+    @Bean
+    public RateLimitFilter rateLimitFilter(StringRedisTemplate redisTemplate, RateLimitProperties rateLimitProperties) {
+        return new RateLimitFilter(redisTemplate, rateLimitProperties);
     }
 
     @Bean

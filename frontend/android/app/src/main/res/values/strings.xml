@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Sunju</string>
+    <string name="title_activity_main">Sunju</string>
+    <string name="package_name">com.sunju.app</string>
+    <string name="custom_url_scheme">com.sunju.app</string>
+</resources>

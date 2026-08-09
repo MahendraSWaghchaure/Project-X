@@ -11,12 +11,13 @@ import { toast } from '@/lib/toastStore';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
+import { LocationPicker } from '@/components/ui/LocationPicker';
 import type { Route } from '@/types/school';
 
 const stopSchema = z.object({
   label: z.string().min(1),
-  latitude: z.coerce.number(),
-  longitude: z.coerce.number(),
+  latitude: z.number(),
+  longitude: z.number(),
   radiusMeters: z.coerce.number().optional(),
 });
 const schema = z.object({
@@ -91,12 +92,15 @@ export function RoutesPage() {
     control,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { name: '', stops: [{ label: '', latitude: 0, longitude: 0, radiusMeters: 150 }] },
   });
   const { fields, append, remove } = useFieldArray({ control, name: 'stops' });
+  const watchedStops = watch('stops');
 
   const createMutation = useMutation({
     mutationFn: (values: FormValues) =>
@@ -155,31 +159,27 @@ export function RoutesPage() {
                 </Button>
               </div>
               {fields.map((field, index) => (
-                <div key={field.id} className="grid grid-cols-1 gap-3 rounded-md border border-slate-200 p-3 sm:grid-cols-4">
+                <div key={field.id} className="grid grid-cols-1 gap-3 rounded-md border border-slate-200 p-3 sm:grid-cols-2">
                   <Input id={`stop-label-${field.id}`} label="Label" {...register(`stops.${index}.label` as const)} />
                   <Input
-                    id={`stop-latitude-${field.id}`}
-                    label="Latitude"
+                    id={`stop-radius-${field.id}`}
+                    label="Radius (m)"
                     type="number"
-                    step="any"
-                    {...register(`stops.${index}.latitude` as const)}
+                    {...register(`stops.${index}.radiusMeters` as const)}
                   />
-                  <Input
-                    id={`stop-longitude-${field.id}`}
-                    label="Longitude"
-                    type="number"
-                    step="any"
-                    {...register(`stops.${index}.longitude` as const)}
+                  <LocationPicker
+                    label={`Stop location`}
+                    latitude={watchedStops?.[index]?.latitude}
+                    longitude={watchedStops?.[index]?.longitude}
+                    onChange={(point) => {
+                      setValue(`stops.${index}.latitude` as const, point.latitude);
+                      setValue(`stops.${index}.longitude` as const, point.longitude);
+                    }}
+                    height={220}
                   />
-                  <div className="flex items-end gap-2">
-                    <Input
-                      id={`stop-radius-${field.id}`}
-                      label="Radius (m)"
-                      type="number"
-                      {...register(`stops.${index}.radiusMeters` as const)}
-                    />
+                  <div className="sm:col-span-2">
                     <Button type="button" variant="danger" onClick={() => remove(index)}>
-                      Remove
+                      Remove stop
                     </Button>
                   </div>
                 </div>

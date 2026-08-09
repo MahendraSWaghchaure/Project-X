@@ -53,7 +53,7 @@ export function LoginPage() {
           <CardTitle>Sign in</CardTitle>
         </CardHeader>
         <CardBody>
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
             <Input label="Email" type="email" autoComplete="email" error={errors.email?.message} {...register('email')} />
             <Input
               label="Password"

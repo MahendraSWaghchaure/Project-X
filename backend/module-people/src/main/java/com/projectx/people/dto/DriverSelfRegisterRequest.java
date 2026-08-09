@@ -10,15 +10,15 @@ import java.time.LocalDate;
 
 /** A privately-owned-vehicle driver signing up on their own, before any school has engaged them - see DriverService.selfRegister. */
 public record DriverSelfRegisterRequest(
-        @NotBlank String firstName,
-        @NotBlank String lastName,
-        @NotBlank @Email String email,
-        @NotBlank @Size(min = 8) String password,
-        @NotBlank String phone,
-        @NotBlank String licenseNumber,
+        @NotBlank @Size(max = 100) String firstName,
+        @NotBlank @Size(max = 100) String lastName,
+        @NotBlank @Email @Size(max = 255) String email,
+        @NotBlank @Size(min = 8, max = 255) String password,
+        @NotBlank @Size(max = 32) String phone,
+        @NotBlank @Size(max = 64) String licenseNumber,
         LocalDate licenseExpiry,
 
-        @NotBlank String vehicleRegistrationNumber,
+        @NotBlank @Size(max = 32) String vehicleRegistrationNumber,
         @NotNull VehicleType vehicleType,
         @Min(1) int vehicleSeatCapacity) {
 }

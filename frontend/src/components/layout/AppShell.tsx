@@ -13,6 +13,7 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   PLATFORM_ADMIN: [
     { label: 'Dashboard', to: '/platform-admin/dashboard' },
     { label: 'Schools', to: '/platform-admin/schools' },
+    { label: 'Grievances', to: '/platform-admin/grievances' },
   ],
   SCHOOL_ADMIN: [
     { label: 'Dashboard', to: '/school-admin/dashboard' },
@@ -21,13 +22,18 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { label: 'Routes', to: '/school-admin/routes' },
     { label: 'Students & Parents', to: '/school-admin/children' },
     { label: 'Trips', to: '/school-admin/trips' },
+    { label: 'Grievances', to: '/school-admin/grievances' },
   ],
-  DRIVER: [{ label: "Today's Trips", to: '/driver/trips' }],
+  DRIVER: [
+    { label: "Today's Trips", to: '/driver/trips' },
+    { label: 'Grievances', to: '/driver/grievances' },
+  ],
   PARENT: [
     { label: 'Track Bus', to: '/parent/track' },
     { label: 'My Children', to: '/parent/children' },
     { label: 'Notifications', to: '/parent/notifications' },
     { label: 'My Profile', to: '/parent/profile' },
+    { label: 'Grievances', to: '/parent/grievances' },
   ],
 };
 

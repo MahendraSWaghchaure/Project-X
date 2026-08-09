@@ -35,6 +35,7 @@
         <module>module-notification</module>
         <module>module-insurance</module>
         <module>module-payment</module>
+        <module>module-grievance</module>
         <module>app</module>
     </modules>
 
@@ -78,6 +79,11 @@
             <dependency>
                 <groupId>com.projectx</groupId>
                 <artifactId>module-payment</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.projectx</groupId>
+                <artifactId>module-grievance</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

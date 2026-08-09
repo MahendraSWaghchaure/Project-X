@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { LocationPicker } from '@/components/ui/LocationPicker';
 import type { School } from '@/types/school';
 
 const schema = z.object({
@@ -24,6 +25,8 @@ const schema = z.object({
   city: z.string().min(1),
   contactPhone: z.string().optional(),
   contactEmail: z.string().email().optional().or(z.literal('')),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
   adminFirstName: z.string().min(1),
   adminLastName: z.string().min(1),
   adminEmail: z.string().email(),
@@ -39,6 +42,8 @@ const editSchema = z.object({
   pincode: z.string().optional(),
   contactPhone: z.string().optional(),
   contactEmail: z.string().email().optional().or(z.literal('')),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
 });
 type EditFormValues = z.infer<typeof editSchema>;
 
@@ -47,6 +52,8 @@ function EditSchoolRow({ school, onDone }: { school: School; onDone: () => void 
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<EditFormValues>({
     resolver: zodResolver(editSchema),
@@ -58,8 +65,12 @@ function EditSchoolRow({ school, onDone }: { school: School; onDone: () => void 
       pincode: school.pincode ?? '',
       contactPhone: school.contactPhone ?? '',
       contactEmail: school.contactEmail ?? '',
+      latitude: school.location?.latitude,
+      longitude: school.location?.longitude,
     },
   });
+  const latitude = watch('latitude');
+  const longitude = watch('longitude');
 
   const updateMutation = useMutation({
     mutationFn: (values: UpdateSchoolRequest) => updateSchool(school.id, values),
@@ -89,6 +100,16 @@ function EditSchoolRow({ school, onDone }: { school: School; onDone: () => void 
       <Input id={`school-pincode-${school.id}`} label="Pincode" {...register('pincode')} />
       <Input id={`school-contact-phone-${school.id}`} label="Contact phone" {...register('contactPhone')} />
       <Input id={`school-contact-email-${school.id}`} label="Contact email" type="email" {...register('contactEmail')} />
+      <LocationPicker
+        label="School location"
+        latitude={latitude}
+        longitude={longitude}
+        onChange={(point) => {
+          setValue('latitude', point.latitude);
+          setValue('longitude', point.longitude);
+        }}
+        height={220}
+      />
       <div className="flex gap-2 sm:col-span-2">
         <Button type="submit" isLoading={isSubmitting}>
           Save
@@ -109,8 +130,12 @@ export function SchoolsPage() {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
+  const newSchoolLatitude = watch('latitude');
+  const newSchoolLongitude = watch('longitude');
 
   const createMutation = useMutation({
     mutationFn: (values: CreateSchoolRequest) => createSchool(values),
@@ -150,6 +175,16 @@ export function SchoolsPage() {
             <Input label="Address" className="sm:col-span-2" error={errors.address?.message} {...register('address')} />
             <Input label="Contact phone" {...register('contactPhone')} />
             <Input label="Contact email" type="email" {...register('contactEmail')} />
+            <LocationPicker
+              label="School location"
+              latitude={newSchoolLatitude}
+              longitude={newSchoolLongitude}
+              onChange={(point) => {
+                setValue('latitude', point.latitude);
+                setValue('longitude', point.longitude);
+              }}
+              height={220}
+            />
             <div className="sm:col-span-2 border-t border-slate-100 pt-4 text-sm font-medium text-slate-500">
               First school admin login
             </div>

@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/projectx_test
+    username: projectx
+    password: projectx
+
+projectx:
+  security:
+    rate-limit:
+      # The integration suite logs in far more than a real user would in a minute across its whole
+      # run - this keeps RateLimitFilter's production-appropriate defaults from making the test
+      # suite itself flaky.
+      login-per-minute: 500
+      refresh-per-minute: 500
+      driver-register-per-minute: 500

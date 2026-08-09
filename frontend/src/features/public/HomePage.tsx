@@ -3,11 +3,15 @@ import { PublicHeader } from '@/components/layout/PublicHeader';
 import { PublicFooter } from '@/components/layout/PublicFooter';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody } from '@/components/ui/Card';
+import { BusIllustration } from '@/components/illustrations/BusIllustration';
+import { FamilyIllustration } from '@/components/illustrations/FamilyIllustration';
+import { ParentIcon, ChildIcon, SchoolIcon, DriverIcon } from '@/components/illustrations/RoleIcons';
 
 const BENEFITS = [
   {
     role: 'Parents',
     title: 'Know exactly where your child is',
+    Icon: ParentIcon,
     points: [
       'Live GPS location of the van/bus, just like tracking a food delivery',
       'Alerts when the vehicle is approaching your stop, and when it arrives',
@@ -18,6 +22,7 @@ const BENEFITS = [
   {
     role: 'Children',
     title: 'Safer trips, every day',
+    Icon: ChildIcon,
     points: [
       'Every child is covered by insurance for the ride',
       'Boarding and drop-off are logged by the driver in real time',
@@ -28,6 +33,7 @@ const BENEFITS = [
   {
     role: 'Schools',
     title: 'Oversight without the overhead',
+    Icon: SchoolIcon,
     points: [
       'One dashboard for every vehicle, driver, and route serving your students',
       'Automatic delay escalation if a drop-off runs past dismissal time',
@@ -38,6 +44,7 @@ const BENEFITS = [
   {
     role: 'Drivers',
     title: 'Fair pay, real support',
+    Icon: DriverIcon,
     points: [
       'Monthly salary plus incentives for covering another route in a pinch',
       'Vehicle and personal insurance coverage included',
@@ -54,23 +61,28 @@ export function HomePage() {
 
       <main className="flex-1">
         {/* Hero */}
-        <section id="home" className="bg-gradient-to-b from-blue-50 to-white px-4 py-20 text-center sm:px-6">
-          <h1 className="mx-auto max-w-3xl text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-            Privately-run school transport, <span className="text-blue-600">finally accountable</span>
-          </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-600">
-            Sunju brings live GPS tracking, arrival alerts, insurance coverage, and verified drivers to school vans
-            and buses across India &mdash; so every parent knows where their child is, in real time.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Link to="/login">
-              <Button className="px-6 py-2.5 text-base">Sign in</Button>
-            </Link>
-            <Link to="/driver/register">
-              <Button variant="secondary" className="px-6 py-2.5 text-base">
-                Register as a driver
-              </Button>
-            </Link>
+        <section id="home" className="bg-gradient-to-b from-blue-50 to-white px-4 py-16 sm:px-6 sm:py-20">
+          <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
+            <div className="text-center md:text-left">
+              <h1 className="mx-auto max-w-xl text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl md:mx-0">
+                Privately-run school transport, <span className="text-blue-600">finally accountable</span>
+              </h1>
+              <p className="mx-auto mt-5 max-w-xl text-lg text-slate-600 md:mx-0">
+                Sunju brings live GPS tracking, arrival alerts, insurance coverage, and verified drivers to school
+                vans and buses across India &mdash; so every parent knows where their child is, in real time.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-3 md:justify-start">
+                <Link to="/login">
+                  <Button className="px-6 py-2.5 text-base">Sign in</Button>
+                </Link>
+                <Link to="/driver/register">
+                  <Button variant="secondary" className="px-6 py-2.5 text-base">
+                    Register as a driver
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            <BusIllustration className="mx-auto w-full max-w-md" />
           </div>
         </section>
 
@@ -87,20 +99,23 @@ export function HomePage() {
                 with a single connected system for parents, schools, drivers, and the vehicles themselves.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                ['Live tracking', 'Every vehicle, every trip'],
-                ['Insurance', 'Child, driver & vehicle'],
-                ['Verified drivers', 'Onboarded and accountable'],
-                ['Instant alerts', 'Arrival & delay notifications'],
-              ].map(([title, desc]) => (
-                <Card key={title}>
-                  <CardBody>
-                    <p className="font-semibold text-slate-900">{title}</p>
-                    <p className="mt-1 text-sm text-slate-500">{desc}</p>
-                  </CardBody>
-                </Card>
-              ))}
+            <div className="flex flex-col items-center gap-6">
+              <FamilyIllustration className="w-48" />
+              <div className="grid w-full grid-cols-2 gap-4">
+                {[
+                  ['Live tracking', 'Every vehicle, every trip'],
+                  ['Insurance', 'Child, driver & vehicle'],
+                  ['Verified drivers', 'Onboarded and accountable'],
+                  ['Instant alerts', 'Arrival & delay notifications'],
+                ].map(([title, desc]) => (
+                  <Card key={title}>
+                    <CardBody>
+                      <p className="font-semibold text-slate-900">{title}</p>
+                      <p className="mt-1 text-sm text-slate-500">{desc}</p>
+                    </CardBody>
+                  </Card>
+                ))}
+              </div>
             </div>
           </div>
         </section>
@@ -127,7 +142,8 @@ export function HomePage() {
             {BENEFITS.map((b) => (
               <Card key={b.role} className="flex flex-col">
                 <CardBody className="flex flex-1 flex-col">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">{b.role}</p>
+                  <b.Icon className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-50 text-blue-600" />
+                  <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-blue-600">{b.role}</p>
                   <p className="mt-1 text-lg font-bold text-slate-900">{b.title}</p>
                   <ul className="mt-4 flex flex-1 flex-col gap-2 text-sm text-slate-600">
                     {b.points.map((point) => (
