@@ -89,6 +89,17 @@ projectx:
       enabled: ${SMTP_ENABLED:false}
       from-address: ${SMTP_FROM_ADDRESS:no-reply@projectx.local}
 
+  payment:
+    razorpay:
+      # Off by default so a fresh dev environment boots without real payment credentials - see
+      # RazorpayProperties. Orders/Checkout (parent fees) and Payouts (driver salary) are
+      # independent toggles since they need entirely different Razorpay account setup.
+      enabled: ${RAZORPAY_ENABLED:false}
+      key-id: ${RAZORPAY_KEY_ID:}
+      key-secret: ${RAZORPAY_KEY_SECRET:}
+      payouts-enabled: ${RAZORPAYX_PAYOUTS_ENABLED:false}
+      payout-account-number: ${RAZORPAYX_ACCOUNT_NUMBER:}
+
   bootstrap:
     admin-email: ${PLATFORM_ADMIN_EMAIL:admin@projectx.local}
     admin-password: ${PLATFORM_ADMIN_PASSWORD:changeme123}

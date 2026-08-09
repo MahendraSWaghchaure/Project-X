@@ -10,13 +10,18 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 
 /**
- * Data model only for now - driverId is a cross-module id reference (module-people), same
- * discipline as elsewhere. incentiveAmount is meant for the "covered another driver's route
- * during a breakdown" bonus from the product spec; the computation that fills these fields in
- * from actual overtime/cover-duty records is phase 2, same as Stripe billing.
+ * driverId is a cross-module id reference (module-people), same discipline as elsewhere.
+ * incentiveAmount is the "covered another driver's route during a breakdown" bonus from the
+ * product spec - filling it in from actual cover-duty records is a later pass; today it can be
+ * set manually by a school admin when running payroll.
+ *
+ * <p>transactionReference/disbursedAt are populated by PayrollDisbursementService once the
+ * RazorpayX payout call succeeds (or failureReason if it didn't) - see that class for what
+ * "real disbursement" actually means here.
  */
 @Entity
 @Table(name = "payroll_records")
@@ -49,6 +54,15 @@ public class PayrollRecord extends Auditable {
     @Column(nullable = false, length = 16)
     private PayrollStatus status = PayrollStatus.PENDING;
 
+    @Column(name = "transaction_reference")
+    private String transactionReference;
+
+    @Column(name = "disbursed_at")
+    private Instant disbursedAt;
+
+    @Column(name = "failure_reason")
+    private String failureReason;
+
     protected PayrollRecord() {
     }
 
@@ -78,8 +92,16 @@ public class PayrollRecord extends Auditable {
         return overtimeHours;
     }
 
+    public void setOvertimeHours(BigDecimal overtimeHours) {
+        this.overtimeHours = overtimeHours;
+    }
+
     public BigDecimal getIncentiveAmount() {
         return incentiveAmount;
+    }
+
+    public void setIncentiveAmount(BigDecimal incentiveAmount) {
+        this.incentiveAmount = incentiveAmount;
     }
 
     public BigDecimal getTotalPaid() {
@@ -88,5 +110,34 @@ public class PayrollRecord extends Auditable {
 
     public PayrollStatus getStatus() {
         return status;
+    }
+
+    public String getTransactionReference() {
+        return transactionReference;
+    }
+
+    public Instant getDisbursedAt() {
+        return disbursedAt;
+    }
+
+    public String getFailureReason() {
+        return failureReason;
+    }
+
+    public void markProcessing() {
+        this.status = PayrollStatus.PROCESSING;
+    }
+
+    public void markPaid(BigDecimal totalPaid, String transactionReference) {
+        this.totalPaid = totalPaid;
+        this.status = PayrollStatus.PAID;
+        this.transactionReference = transactionReference;
+        this.disbursedAt = Instant.now();
+        this.failureReason = null;
+    }
+
+    public void markFailed(String reason) {
+        this.status = PayrollStatus.FAILED;
+        this.failureReason = reason;
     }
 }

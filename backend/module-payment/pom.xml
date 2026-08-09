@@ -14,12 +14,19 @@
     <artifactId>module-payment</artifactId>
     <packaging>jar</packaging>
     <name>ProjectX :: Payment</name>
-    <description>Stub module. Phase 2: Stripe parent-fee billing + driver payroll/overtime-incentive computation and disbursement tracking. Only the payroll data model exists so far - no Stripe dependency, no service/controller layer yet.</description>
+    <description>Parent fee billing (Razorpay Orders/Checkout), advance-payment discounts, late-fee accrual and waiver workflow, and driver payroll disbursement via RazorpayX Payouts.</description>
 
     <dependencies>
         <dependency>
             <groupId>com.projectx</groupId>
             <artifactId>common</artifactId>
+        </dependency>
+        <!-- For ParentProfileRepository/ChildRepository/DriverProfileRepository - resolving the
+             current user's parent/driver profile id and validating child/school ownership. Same
+             cross-module dependency discipline module-people already uses on module-school. -->
+        <dependency>
+            <groupId>com.projectx</groupId>
+            <artifactId>module-people</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
