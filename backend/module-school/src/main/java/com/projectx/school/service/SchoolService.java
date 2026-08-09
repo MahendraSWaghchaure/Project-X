@@ -8,8 +8,10 @@ import com.projectx.identity.domain.UserAccount;
 import com.projectx.identity.service.UserProvisioningService;
 import com.projectx.school.domain.School;
 import com.projectx.school.domain.SchoolAdminProfile;
+import com.projectx.school.domain.SchoolStatus;
 import com.projectx.school.dto.CreateSchoolRequest;
 import com.projectx.school.dto.SchoolResponse;
+import com.projectx.school.dto.UpdateSchoolRequest;
 import com.projectx.school.repo.SchoolAdminProfileRepository;
 import com.projectx.school.repo.SchoolRepository;
 import java.util.List;
@@ -63,6 +65,29 @@ public class SchoolService {
     public SchoolResponse getSchool(Long schoolId) {
         School school = findByIdOrThrow(schoolId);
         CurrentUserContext.requireSchoolAccess(schoolId);
+        return SchoolResponse.from(school);
+    }
+
+    /** Either the platform admin or that school's own admin can edit its details. */
+    public SchoolResponse updateSchool(Long schoolId, UpdateSchoolRequest request) {
+        CurrentUserContext.requireSchoolAccess(schoolId);
+        School school = findByIdOrThrow(schoolId);
+        school.updateDetails(request.name(), request.address(), request.city(), request.state(),
+                request.pincode(), request.contactPhone(), request.contactEmail());
+        if (request.latitude() != null && request.longitude() != null) {
+            school.setLocation(GeoPoints.toPoint(request.latitude(), request.longitude()));
+        }
+        if (request.geofenceRadiusMeters() != null) {
+            school.setGeofenceRadiusMeters(request.geofenceRadiusMeters());
+        }
+        school.setDismissalTime(request.dismissalTime());
+        return SchoolResponse.from(school);
+    }
+
+    /** Platform-admin-only: a school can't suspend itself. This is the "delete" a platform admin performs - reversible, data stays intact. */
+    public SchoolResponse setSchoolStatus(Long schoolId, SchoolStatus status) {
+        School school = findByIdOrThrow(schoolId);
+        school.setStatus(status);
         return SchoolResponse.from(school);
     }
 

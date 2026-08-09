@@ -9,6 +9,8 @@ public interface DriverProfileRepository extends JpaRepository<DriverProfile, Lo
 
     List<DriverProfile> findBySchoolId(Long schoolId);
 
+    List<DriverProfile> findBySchoolIdIsNull();
+
     Optional<DriverProfile> findByUserId(Long userId);
 
     boolean existsByLicenseNumberIgnoreCase(String licenseNumber);

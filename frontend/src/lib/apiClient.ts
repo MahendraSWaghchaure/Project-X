@@ -64,8 +64,9 @@ apiClient.interceptors.response.use(
 );
 
 export function unwrap<T>(response: { data: ApiResponse<T> }): T {
-  if (!response.data.success || response.data.data === null) {
+  if (!response.data.success) {
     throw new Error(response.data.error?.message ?? 'Request failed');
   }
-  return response.data.data;
+  // Void endpoints (DELETE/terminate/retire) legitimately succeed with data: null.
+  return response.data.data as T;
 }

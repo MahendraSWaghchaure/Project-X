@@ -7,5 +7,7 @@ import java.util.List;
 
 public record CreateRouteRequest(
         @NotBlank String name,
-        @NotEmpty @Valid List<RouteStopRequest> stops) {
+        @NotEmpty @Valid List<RouteStopRequest> stops,
+        Integer zoneMinRadiusMeters,
+        Integer zoneMaxRadiusMeters) {
 }

@@ -1,12 +1,14 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createChildAsParent, listMyChildren } from '@/lib/api/children';
+import { createChildAsParent, listMyChildren, updateChildAsParent, type UpdateChildRequest } from '@/lib/api/children';
 import { toast } from '@/lib/toastStore';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
+import type { Child } from '@/types/people';
 
 const schema = z.object({
   firstName: z.string().min(1),
@@ -16,8 +18,56 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
+function EditChildRow({ child, onDone }: { child: Child; onDone: () => void }) {
+  const queryClient = useQueryClient();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      firstName: child.firstName,
+      lastName: child.lastName,
+      dateOfBirth: child.dateOfBirth ?? undefined,
+      classSection: child.classSection ?? undefined,
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (values: UpdateChildRequest) => updateChildAsParent(child.id, values),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-children'] });
+      toast.success('Child updated');
+      onDone();
+    },
+    onError: () => toast.error('Could not update child'),
+  });
+
+  return (
+    <form
+      onSubmit={handleSubmit((values) => updateMutation.mutate(values))}
+      className="grid grid-cols-1 gap-3 rounded-md border border-blue-200 bg-blue-50/40 p-3 sm:grid-cols-2"
+    >
+      <Input id={`my-child-first-name-${child.id}`} label="First name" error={errors.firstName?.message} {...register('firstName')} />
+      <Input id={`my-child-last-name-${child.id}`} label="Last name" error={errors.lastName?.message} {...register('lastName')} />
+      <Input id={`my-child-dob-${child.id}`} label="Date of birth" type="date" {...register('dateOfBirth')} />
+      <Input id={`my-child-class-section-${child.id}`} label="Class / section" {...register('classSection')} />
+      <div className="flex gap-2 sm:col-span-2">
+        <Button type="submit" isLoading={isSubmitting}>
+          Save
+        </Button>
+        <Button type="button" variant="secondary" onClick={onDone}>
+          Cancel
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 export function ParentChildrenPage() {
   const queryClient = useQueryClient();
+  const [editingId, setEditingId] = useState<number | null>(null);
   const { data: children, isLoading } = useQuery({ queryKey: ['my-children'], queryFn: listMyChildren });
   const {
     register,
@@ -67,17 +117,28 @@ export function ParentChildrenPage() {
         </CardHeader>
         <CardBody>
           {isLoading && <p className="text-sm text-slate-500">Loading&hellip;</p>}
-          <ul className="divide-y divide-slate-100">
-            {children?.map((child) => (
-              <li key={child.id} className="py-3">
-                <p className="font-medium text-slate-900">
-                  {child.firstName} {child.lastName}
-                </p>
-                <p className="text-sm text-slate-500">
-                  {child.routeId ? `Assigned to route #${child.routeId}` : 'Not yet assigned to a route by the school'}
-                </p>
-              </li>
-            ))}
+          <ul className="flex flex-col divide-y divide-slate-100">
+            {children?.map((child) =>
+              editingId === child.id ? (
+                <li key={child.id} className="py-3">
+                  <EditChildRow child={child} onDone={() => setEditingId(null)} />
+                </li>
+              ) : (
+                <li key={child.id} className="flex items-center justify-between gap-4 py-3">
+                  <div>
+                    <p className="font-medium text-slate-900">
+                      {child.firstName} {child.lastName}
+                    </p>
+                    <p className="text-sm text-slate-500">
+                      {child.routeId ? `Assigned to route #${child.routeId}` : 'Not yet assigned to a route by the school'}
+                    </p>
+                  </div>
+                  <Button variant="secondary" onClick={() => setEditingId(child.id)}>
+                    Edit
+                  </Button>
+                </li>
+              ),
+            )}
             {children?.length === 0 && <p className="py-3 text-sm text-slate-500">No children registered yet.</p>}
           </ul>
         </CardBody>

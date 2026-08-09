@@ -12,6 +12,7 @@ dist/
 dist-ssr/
 frontend/coverage/
 *.local
+*.tsbuildinfo
 
 # --- Environment / secrets ---
 .env

@@ -13,6 +13,9 @@ import jakarta.persistence.Table;
 /**
  * insurancePolicyId is a cross-module reference by id only (module-insurance owns that table) -
  * deliberately no FK constraint, so modules stay independently extractable/splittable later.
+ *
+ * <p>schoolId is nullable: an independent (privately-owned) driver can register their own vehicle
+ * before any school has claimed them - see module-people's DriverService.selfRegister/claimDriver.
  */
 @Entity
 @Table(name = "vehicles")
@@ -22,7 +25,7 @@ public class Vehicle extends Auditable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "school_id", nullable = false)
+    @Column(name = "school_id")
     private Long schoolId;
 
     @Column(name = "registration_number", nullable = false, unique = true)
@@ -65,6 +68,10 @@ public class Vehicle extends Auditable {
         return schoolId;
     }
 
+    public void setSchoolId(Long schoolId) {
+        this.schoolId = schoolId;
+    }
+
     public String getRegistrationNumber() {
         return registrationNumber;
     }
@@ -75,6 +82,12 @@ public class Vehicle extends Auditable {
 
     public int getSeatCapacity() {
         return seatCapacity;
+    }
+
+    public void updateDetails(String registrationNumber, VehicleType type, int seatCapacity) {
+        this.registrationNumber = registrationNumber;
+        this.type = type;
+        this.seatCapacity = seatCapacity;
     }
 
     public String getGpsDeviceId() {

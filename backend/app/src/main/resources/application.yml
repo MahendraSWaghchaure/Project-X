@@ -26,6 +26,10 @@ spring:
     # inside that module's own jar under the same classpath:db/migration prefix, and Flyway scans
     # across all jars on the classpath for it. Version numbers are partitioned per module (see
     # each module's V*__*.sql header comment) so there's no collision risk.
+    # Because each module's range is independent, a later change to an earlier module (e.g. a new
+    # module-school migration) can land with a version number lower than one another module already
+    # applied - that's expected here, not a real ordering hazard, so out-of-order execution is allowed.
+    out-of-order: true
 
   data:
     redis:

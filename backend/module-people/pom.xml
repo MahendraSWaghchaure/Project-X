@@ -25,6 +25,13 @@
             <groupId>com.projectx</groupId>
             <artifactId>module-identity</artifactId>
         </dependency>
+        <!-- Needed for: independent-driver vehicle claiming (Vehicle) and geo-based route
+             auto-allocation (School/Route/RouteStop). No reverse dependency exists, so this
+             doesn't introduce a cycle. -->
+        <dependency>
+            <groupId>com.projectx</groupId>
+            <artifactId>module-school</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

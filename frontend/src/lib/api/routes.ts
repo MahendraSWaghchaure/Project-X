@@ -13,6 +13,8 @@ export interface RouteStopRequest {
 export interface CreateRouteRequest {
   name: string;
   stops: RouteStopRequest[];
+  zoneMinRadiusMeters?: number;
+  zoneMaxRadiusMeters?: number;
 }
 
 export function listRoutes(schoolId: number): Promise<Route[]> {
@@ -26,5 +28,16 @@ export function createRoute(schoolId: number, request: CreateRouteRequest): Prom
 export function assignRoute(schoolId: number, routeId: number, vehicleId: number, driverId: number): Promise<Route> {
   return apiClient
     .put<ApiResponse<Route>>(`/schools/${schoolId}/routes/${routeId}/assignment`, { vehicleId, driverId })
+    .then(unwrap);
+}
+
+export function updateRouteZone(
+  schoolId: number,
+  routeId: number,
+  zoneMinRadiusMeters: number,
+  zoneMaxRadiusMeters: number,
+): Promise<Route> {
+  return apiClient
+    .put<ApiResponse<Route>>(`/schools/${schoolId}/routes/${routeId}/zone`, { zoneMinRadiusMeters, zoneMaxRadiusMeters })
     .then(unwrap);
 }

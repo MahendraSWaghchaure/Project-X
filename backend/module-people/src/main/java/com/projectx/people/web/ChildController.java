@@ -5,12 +5,15 @@ import com.projectx.people.dto.AssignChildRouteStopRequest;
 import com.projectx.people.dto.ChildResponse;
 import com.projectx.people.dto.CreateChildRequest;
 import com.projectx.people.dto.LinkInsurancePolicyRequest;
+import com.projectx.people.dto.UpdateChildRequest;
 import com.projectx.people.service.ChildService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -68,10 +71,37 @@ public class ChildController {
         return ApiResponse.ok(childService.assignRouteStop(schoolId, childId, request));
     }
 
+    @PostMapping("/schools/{schoolId}/children/{childId}/auto-assign-route")
+    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SCHOOL_ADMIN')")
+    public ApiResponse<ChildResponse> autoAssignRoute(@PathVariable Long schoolId, @PathVariable Long childId) {
+        return ApiResponse.ok(childService.autoAssignRoute(schoolId, childId));
+    }
+
     @PutMapping("/schools/{schoolId}/children/{childId}/insurance-policy")
     @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SCHOOL_ADMIN')")
     public ApiResponse<ChildResponse> linkInsurancePolicy(@PathVariable Long schoolId, @PathVariable Long childId,
                                                             @Valid @RequestBody LinkInsurancePolicyRequest request) {
         return ApiResponse.ok(childService.linkInsurancePolicy(schoolId, childId, request.insurancePolicyId()));
+    }
+
+    @PatchMapping("/schools/{schoolId}/children/{childId}")
+    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SCHOOL_ADMIN')")
+    public ApiResponse<ChildResponse> updateChildAsSchoolAdmin(@PathVariable Long schoolId, @PathVariable Long childId,
+                                                                 @Valid @RequestBody UpdateChildRequest request) {
+        return ApiResponse.ok(childService.updateChildAsSchoolAdmin(schoolId, childId, request));
+    }
+
+    @DeleteMapping("/schools/{schoolId}/children/{childId}")
+    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SCHOOL_ADMIN')")
+    public ApiResponse<Void> deactivateChild(@PathVariable Long schoolId, @PathVariable Long childId) {
+        childService.deactivateChild(schoolId, childId);
+        return ApiResponse.ok(null);
+    }
+
+    @PatchMapping("/parents/me/children/{childId}")
+    @PreAuthorize("hasRole('PARENT')")
+    public ApiResponse<ChildResponse> updateChildAsParent(@PathVariable Long childId,
+                                                            @Valid @RequestBody UpdateChildRequest request) {
+        return ApiResponse.ok(childService.updateChildAsParent(childId, request));
     }
 }

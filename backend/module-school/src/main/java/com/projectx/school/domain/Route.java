@@ -35,6 +35,13 @@ public class Route extends Auditable {
     @Column(nullable = false)
     private boolean active = true;
 
+    /** Zone-based auto-allocation: this route serves children whose home distance from the school is in [zoneMinRadiusMeters, zoneMaxRadiusMeters). Null max = unbounded outer zone. */
+    @Column(name = "zone_min_radius_meters", nullable = false)
+    private int zoneMinRadiusMeters = 0;
+
+    @Column(name = "zone_max_radius_meters")
+    private Integer zoneMaxRadiusMeters;
+
     protected Route() {
     }
 
@@ -81,5 +88,23 @@ public class Route extends Auditable {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public int getZoneMinRadiusMeters() {
+        return zoneMinRadiusMeters;
+    }
+
+    public Integer getZoneMaxRadiusMeters() {
+        return zoneMaxRadiusMeters;
+    }
+
+    public void setZone(int zoneMinRadiusMeters, Integer zoneMaxRadiusMeters) {
+        this.zoneMinRadiusMeters = zoneMinRadiusMeters;
+        this.zoneMaxRadiusMeters = zoneMaxRadiusMeters;
+    }
+
+    /** Does a home this far from the school fall in this route's zone? */
+    public boolean coversDistance(double distanceMeters) {
+        return distanceMeters >= zoneMinRadiusMeters && (zoneMaxRadiusMeters == null || distanceMeters < zoneMaxRadiusMeters);
     }
 }

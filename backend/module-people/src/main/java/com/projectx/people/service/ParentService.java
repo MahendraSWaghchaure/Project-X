@@ -5,6 +5,8 @@ import com.projectx.common.geo.GeoPoints;
 import com.projectx.common.security.CurrentUserContext;
 import com.projectx.common.security.Role;
 import com.projectx.identity.domain.UserAccount;
+import com.projectx.identity.domain.UserStatus;
+import com.projectx.identity.repo.UserAccountRepository;
 import com.projectx.identity.service.InvitationService;
 import com.projectx.identity.service.UserProvisioningService;
 import com.projectx.people.domain.ParentProfile;
@@ -13,6 +15,7 @@ import com.projectx.people.dto.InviteParentRequest;
 import com.projectx.people.dto.InviteParentResponse;
 import com.projectx.people.dto.ParentResponse;
 import com.projectx.people.repo.ParentProfileRepository;
+import java.util.List;
 import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,12 +25,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class ParentService {
 
     private final ParentProfileRepository parentProfileRepository;
+    private final UserAccountRepository userAccountRepository;
     private final UserProvisioningService userProvisioningService;
     private final InvitationService invitationService;
 
-    public ParentService(ParentProfileRepository parentProfileRepository, UserProvisioningService userProvisioningService,
-                          InvitationService invitationService) {
+    public ParentService(ParentProfileRepository parentProfileRepository, UserAccountRepository userAccountRepository,
+                          UserProvisioningService userProvisioningService, InvitationService invitationService) {
         this.parentProfileRepository = parentProfileRepository;
+        this.userAccountRepository = userAccountRepository;
         this.userProvisioningService = userProvisioningService;
         this.invitationService = invitationService;
     }
@@ -48,16 +53,46 @@ public class ParentService {
                 ? GeoPoints.toPoint(request.latitude(), request.longitude())
                 : null;
         profile.completeProfile(request.firstName(), request.lastName(), request.phone(), request.address(), homeLocation);
-        return ParentResponse.from(profile);
+        return toResponse(profile);
     }
 
     @Transactional(readOnly = true)
     public ParentResponse getMyProfile() {
-        return ParentResponse.from(findByUserIdOrThrow(CurrentUserContext.get().userId()));
+        return toResponse(findByUserIdOrThrow(CurrentUserContext.get().userId()));
+    }
+
+    @Transactional(readOnly = true)
+    public List<ParentResponse> listParentsForSchool(Long schoolId) {
+        CurrentUserContext.requireSchoolAccess(schoolId);
+        return parentProfileRepository.findByInvitedBySchoolId(schoolId).stream().map(this::toResponse).toList();
+    }
+
+    /** "Delete" from the school admin's perspective - disabling the login keeps the parent/child/trip history intact and is reversible. */
+    public void deactivateParent(Long schoolId, Long parentProfileId) {
+        CurrentUserContext.requireSchoolAccess(schoolId);
+        ParentProfile parent = findWithinSchoolOrThrow(schoolId, parentProfileId);
+        UserAccount account = userAccountRepository.findById(parent.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("No login for this parent"));
+        account.setStatus(UserStatus.DISABLED);
     }
 
     ParentProfile findByUserIdOrThrow(Long userId) {
         return parentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Parent profile not found for current user"));
+    }
+
+    private ParentProfile findWithinSchoolOrThrow(Long schoolId, Long parentProfileId) {
+        ParentProfile parent = parentProfileRepository.findById(parentProfileId)
+                .orElseThrow(() -> ResourceNotFoundException.of("Parent", parentProfileId));
+        if (!parent.getInvitedBySchoolId().equals(schoolId)) {
+            throw ResourceNotFoundException.of("Parent", parentProfileId);
+        }
+        return parent;
+    }
+
+    private ParentResponse toResponse(ParentProfile parent) {
+        UserAccount account = userAccountRepository.findById(parent.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("No login for this parent"));
+        return ParentResponse.from(parent, account);
     }
 }

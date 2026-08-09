@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuthStore } from '@/lib/authStore';
 import { cn } from '@/lib/cn';
+import { Logo } from '@/components/ui/Logo';
 import type { Role } from '@/types/auth';
 
 interface NavItem {
@@ -18,7 +19,7 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { label: 'Vehicles', to: '/school-admin/vehicles' },
     { label: 'Drivers', to: '/school-admin/drivers' },
     { label: 'Routes', to: '/school-admin/routes' },
-    { label: 'Students', to: '/school-admin/children' },
+    { label: 'Students & Parents', to: '/school-admin/children' },
     { label: 'Trips', to: '/school-admin/trips' },
   ],
   DRIVER: [{ label: "Today's Trips", to: '/driver/trips' }],
@@ -26,6 +27,7 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { label: 'Track Bus', to: '/parent/track' },
     { label: 'My Children', to: '/parent/children' },
     { label: 'Notifications', to: '/parent/notifications' },
+    { label: 'My Profile', to: '/parent/profile' },
   ],
 };
 
@@ -43,7 +45,9 @@ export function AppShell() {
   return (
     <div className="flex min-h-screen">
       <aside className="flex w-60 flex-col border-r border-slate-200 bg-white">
-        <div className="px-5 py-5 text-lg font-bold text-blue-600">ProjectX</div>
+        <div className="px-5 py-5">
+          <Logo size="sm" />
+        </div>
         <nav className="flex flex-1 flex-col gap-1 px-3">
           {navItems.map((item) => (
             <NavLink

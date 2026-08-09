@@ -104,6 +104,13 @@ public class Child extends Auditable {
         return classSection;
     }
 
+    public void updateDetails(String firstName, String lastName, LocalDate dateOfBirth, String classSection) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.dateOfBirth = dateOfBirth;
+        this.classSection = classSection;
+    }
+
     public Long getRouteId() {
         return routeId;
     }

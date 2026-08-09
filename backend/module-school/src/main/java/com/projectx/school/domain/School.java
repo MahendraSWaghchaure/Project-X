@@ -100,6 +100,17 @@ public class School extends Auditable {
         return contactEmail;
     }
 
+    public void updateDetails(String name, String address, String city, String state, String pincode,
+                               String contactPhone, String contactEmail) {
+        this.name = name;
+        this.address = address;
+        this.city = city;
+        this.state = state;
+        this.pincode = pincode;
+        this.contactPhone = contactPhone;
+        this.contactEmail = contactEmail;
+    }
+
     public Point getLocation() {
         return location;
     }

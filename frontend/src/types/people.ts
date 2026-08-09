@@ -4,7 +4,7 @@ export type DriverEmploymentStatus = 'ACTIVE' | 'ON_LEAVE' | 'TERMINATED';
 
 export interface Driver {
   id: number;
-  schoolId: number;
+  schoolId: number | null;
   firstName: string;
   lastName: string;
   phone: string;
@@ -12,12 +12,15 @@ export interface Driver {
   licenseExpiry: string | null;
   insurancePolicyId: number | null;
   baseSalaryMonthly: string | null;
+  vehicleId: number | null;
   employmentStatus: DriverEmploymentStatus;
 }
 
 export interface Parent {
   id: number;
   invitedBySchoolId: number;
+  email: string | null;
+  accountStatus: string;
   firstName: string | null;
   lastName: string | null;
   phone: string | null;

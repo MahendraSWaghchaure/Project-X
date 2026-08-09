@@ -9,9 +9,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -38,6 +40,12 @@ public class GlobalExceptionHandler {
         return respond(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS", "Invalid username or password");
     }
 
+    /** Thrown when a school/platform admin has suspended/terminated/deactivated this account - see AuthService.login. */
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDisabled(DisabledException ex) {
+        return respond(HttpStatus.FORBIDDEN, "ACCOUNT_DISABLED", "This account has been disabled. Contact your school for help.");
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException ex) {
         List<ApiError.FieldError> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
@@ -45,6 +53,11 @@ public class GlobalExceptionHandler {
                 .toList();
         ApiError error = new ApiError("VALIDATION_ERROR", "Request failed validation", fieldErrors);
         return ResponseEntity.badRequest().body(ApiResponse.error(error));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUnreadableBody(HttpMessageNotReadableException ex) {
+        return respond(HttpStatus.BAD_REQUEST, "MALFORMED_REQUEST", "Request body is missing or malformed");
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

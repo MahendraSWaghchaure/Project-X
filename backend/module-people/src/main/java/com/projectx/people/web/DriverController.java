@@ -5,11 +5,13 @@ import com.projectx.people.dto.CreateDriverRequest;
 import com.projectx.people.dto.DriverResponse;
 import com.projectx.people.dto.LinkInsurancePolicyRequest;
 import com.projectx.people.dto.UpdateDriverEmploymentStatusRequest;
+import com.projectx.people.dto.UpdateDriverRequest;
 import com.projectx.people.service.DriverService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -52,5 +54,22 @@ public class DriverController {
     public ApiResponse<DriverResponse> linkInsurancePolicy(@PathVariable Long schoolId, @PathVariable Long driverId,
                                                              @Valid @RequestBody LinkInsurancePolicyRequest request) {
         return ApiResponse.ok(driverService.linkInsurancePolicy(schoolId, driverId, request.insurancePolicyId()));
+    }
+
+    @PatchMapping("/{driverId}")
+    public ApiResponse<DriverResponse> updateDriver(@PathVariable Long schoolId, @PathVariable Long driverId,
+                                                      @Valid @RequestBody UpdateDriverRequest request) {
+        return ApiResponse.ok(driverService.updateDriver(schoolId, driverId, request));
+    }
+
+    @DeleteMapping("/{driverId}")
+    public ApiResponse<Void> terminateDriver(@PathVariable Long schoolId, @PathVariable Long driverId) {
+        driverService.terminateDriver(schoolId, driverId);
+        return ApiResponse.ok(null);
+    }
+
+    @PostMapping("/{driverId}/claim")
+    public ApiResponse<DriverResponse> claimDriver(@PathVariable Long schoolId, @PathVariable Long driverId) {
+        return ApiResponse.ok(driverService.claimDriver(schoolId, driverId));
     }
 }

@@ -47,5 +47,7 @@ export interface Route {
   vehicleId: number | null;
   driverId: number | null;
   active: boolean;
+  zoneMinRadiusMeters: number | null;
+  zoneMaxRadiusMeters: number | null;
   stops: RouteStop[];
 }

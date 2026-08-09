@@ -94,6 +94,11 @@ public class UserAccount extends Auditable {
         return schoolId;
     }
 
+    /** Used when an independent driver is claimed by a school - see module-people's DriverService.claimDriver. */
+    public void setSchoolId(Long schoolId) {
+        this.schoolId = schoolId;
+    }
+
     public UserStatus getStatus() {
         return status;
     }

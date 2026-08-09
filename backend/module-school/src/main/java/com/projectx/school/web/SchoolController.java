@@ -3,12 +3,15 @@ package com.projectx.school.web;
 import com.projectx.common.web.ApiResponse;
 import com.projectx.school.dto.CreateSchoolRequest;
 import com.projectx.school.dto.SchoolResponse;
+import com.projectx.school.dto.UpdateSchoolRequest;
+import com.projectx.school.dto.UpdateSchoolStatusRequest;
 import com.projectx.school.service.SchoolService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,5 +46,18 @@ public class SchoolController {
     @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SCHOOL_ADMIN')")
     public ApiResponse<SchoolResponse> getSchool(@PathVariable Long schoolId) {
         return ApiResponse.ok(schoolService.getSchool(schoolId));
+    }
+
+    @PatchMapping("/{schoolId}")
+    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SCHOOL_ADMIN')")
+    public ApiResponse<SchoolResponse> updateSchool(@PathVariable Long schoolId, @Valid @RequestBody UpdateSchoolRequest request) {
+        return ApiResponse.ok(schoolService.updateSchool(schoolId, request));
+    }
+
+    @PatchMapping("/{schoolId}/status")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    public ApiResponse<SchoolResponse> updateSchoolStatus(@PathVariable Long schoolId,
+                                                            @Valid @RequestBody UpdateSchoolStatusRequest request) {
+        return ApiResponse.ok(schoolService.setSchoolStatus(schoolId, request.status()));
     }
 }

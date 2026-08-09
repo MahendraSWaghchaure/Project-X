@@ -12,6 +12,11 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+/**
+ * schoolId is nullable: an independently-registered (privately-owned-vehicle) driver has no
+ * school until one claims them - see DriverService.selfRegister/claimDriver. vehicleId is the
+ * vehicle they registered for themselves in that case (cross-module id reference, module-school).
+ */
 @Entity
 @Table(name = "driver_profiles")
 public class DriverProfile extends Auditable {
@@ -23,7 +28,7 @@ public class DriverProfile extends Auditable {
     @Column(name = "user_id", nullable = false, unique = true)
     private Long userId;
 
-    @Column(name = "school_id", nullable = false)
+    @Column(name = "school_id")
     private Long schoolId;
 
     @Column(name = "first_name", nullable = false)
@@ -46,6 +51,9 @@ public class DriverProfile extends Auditable {
 
     @Column(name = "base_salary_monthly", precision = 12, scale = 2)
     private BigDecimal baseSalaryMonthly;
+
+    @Column(name = "vehicle_id")
+    private Long vehicleId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
@@ -78,6 +86,10 @@ public class DriverProfile extends Auditable {
         return schoolId;
     }
 
+    public void setSchoolId(Long schoolId) {
+        this.schoolId = schoolId;
+    }
+
     public String getFirstName() {
         return firstName;
     }
@@ -98,6 +110,16 @@ public class DriverProfile extends Auditable {
         return licenseExpiry;
     }
 
+    public void updateDetails(String firstName, String lastName, String phone, String licenseNumber,
+                               LocalDate licenseExpiry, BigDecimal baseSalaryMonthly) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.phone = phone;
+        this.licenseNumber = licenseNumber;
+        this.licenseExpiry = licenseExpiry;
+        this.baseSalaryMonthly = baseSalaryMonthly;
+    }
+
     public Long getInsurancePolicyId() {
         return insurancePolicyId;
     }
@@ -110,11 +132,23 @@ public class DriverProfile extends Auditable {
         return baseSalaryMonthly;
     }
 
+    public Long getVehicleId() {
+        return vehicleId;
+    }
+
+    public void setVehicleId(Long vehicleId) {
+        this.vehicleId = vehicleId;
+    }
+
     public DriverEmploymentStatus getEmploymentStatus() {
         return employmentStatus;
     }
 
     public void setEmploymentStatus(DriverEmploymentStatus employmentStatus) {
         this.employmentStatus = employmentStatus;
+    }
+
+    public boolean isIndependent() {
+        return schoolId == null;
     }
 }

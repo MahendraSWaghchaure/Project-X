@@ -6,6 +6,7 @@ import com.projectx.common.security.CurrentUserContext;
 import com.projectx.school.domain.Vehicle;
 import com.projectx.school.domain.VehicleStatus;
 import com.projectx.school.dto.CreateVehicleRequest;
+import com.projectx.school.dto.UpdateVehicleRequest;
 import com.projectx.school.dto.VehicleResponse;
 import com.projectx.school.repo.VehicleRepository;
 import java.util.List;
@@ -43,6 +44,25 @@ public class VehicleService {
         Vehicle vehicle = findWithinSchool(schoolId, vehicleId);
         vehicle.setStatus(status);
         return VehicleResponse.from(vehicle);
+    }
+
+    public VehicleResponse updateVehicle(Long schoolId, Long vehicleId, UpdateVehicleRequest request) {
+        CurrentUserContext.requireSchoolAccess(schoolId);
+        Vehicle vehicle = findWithinSchool(schoolId, vehicleId);
+        if (!vehicle.getRegistrationNumber().equalsIgnoreCase(request.registrationNumber())
+                && vehicleRepository.existsByRegistrationNumberIgnoreCase(request.registrationNumber())) {
+            throw new ConflictException("Vehicle already registered: " + request.registrationNumber());
+        }
+        vehicle.updateDetails(request.registrationNumber(), request.type(), request.seatCapacity());
+        vehicle.setGpsDeviceId(request.gpsDeviceId());
+        return VehicleResponse.from(vehicle);
+    }
+
+    /** "Delete" from the UI's perspective - retiring keeps trip history intact instead of hitting the FK a hard delete would. */
+    public void retireVehicle(Long schoolId, Long vehicleId) {
+        CurrentUserContext.requireSchoolAccess(schoolId);
+        Vehicle vehicle = findWithinSchool(schoolId, vehicleId);
+        vehicle.setStatus(VehicleStatus.RETIRED);
     }
 
     public VehicleResponse linkInsurancePolicy(Long schoolId, Long vehicleId, Long insurancePolicyId) {

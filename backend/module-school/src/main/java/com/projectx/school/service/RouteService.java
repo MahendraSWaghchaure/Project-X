@@ -10,6 +10,7 @@ import com.projectx.school.dto.CreateRouteRequest;
 import com.projectx.school.dto.RouteResponse;
 import com.projectx.school.dto.RouteStopRequest;
 import com.projectx.school.dto.RouteStopResponse;
+import com.projectx.school.dto.UpdateRouteZoneRequest;
 import com.projectx.school.repo.RouteRepository;
 import com.projectx.school.repo.RouteStopRepository;
 import java.util.List;
@@ -30,9 +31,14 @@ public class RouteService {
 
     public RouteResponse createRoute(Long schoolId, CreateRouteRequest request) {
         CurrentUserContext.requireSchoolAccess(schoolId);
-        Route route = routeRepository.save(new Route(schoolId, request.name()));
+        Route route = new Route(schoolId, request.name());
+        if (request.zoneMinRadiusMeters() != null) {
+            route.setZone(request.zoneMinRadiusMeters(), request.zoneMaxRadiusMeters());
+        }
+        route = routeRepository.save(route);
+        Long routeId = route.getId();
         List<RouteStop> stops = request.stops().stream()
-                .map(s -> toStop(route.getId(), s))
+                .map(s -> toStop(routeId, s))
                 .toList();
         routeStopRepository.saveAll(stops);
         return RouteResponse.from(route, toStopResponses(stops));
@@ -58,6 +64,13 @@ public class RouteService {
         Route route = findWithinSchool(schoolId, routeId);
         route.setVehicleId(request.vehicleId());
         route.setDriverId(request.driverId());
+        return RouteResponse.from(route, stopsFor(route.getId()));
+    }
+
+    public RouteResponse updateZone(Long schoolId, Long routeId, UpdateRouteZoneRequest request) {
+        CurrentUserContext.requireSchoolAccess(schoolId);
+        Route route = findWithinSchool(schoolId, routeId);
+        route.setZone(request.zoneMinRadiusMeters(), request.zoneMaxRadiusMeters());
         return RouteResponse.from(route, stopsFor(route.getId()));
     }
 

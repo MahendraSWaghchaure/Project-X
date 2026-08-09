@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/Toaster';
 import { HomePage } from '@/features/public/HomePage';
 import { NotFoundPage } from '@/features/public/NotFoundPage';
 import { UnauthorizedPage } from '@/features/public/UnauthorizedPage';
+import { DriverRegisterPage } from '@/features/public/DriverRegisterPage';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { AcceptInvitePage } from '@/features/auth/AcceptInvitePage';
 
@@ -25,6 +26,7 @@ import { TrackBusPage } from '@/features/parent/TrackBusPage';
 import { ParentChildrenPage } from '@/features/parent/ChildrenPage';
 import { NotificationsPage } from '@/features/parent/NotificationsPage';
 import { CompleteProfilePage } from '@/features/parent/CompleteProfilePage';
+import { ParentProfilePage } from '@/features/parent/ProfilePage';
 
 export default function App() {
   return (
@@ -34,6 +36,7 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/accept-invite/:token" element={<AcceptInvitePage />} />
+        <Route path="/driver/register" element={<DriverRegisterPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
         {/* Parent completes their profile right after accepting an invite, before the normal shell/nav applies */}
@@ -70,6 +73,7 @@ export default function App() {
             <Route path="/parent/track" element={<TrackBusPage />} />
             <Route path="/parent/children" element={<ParentChildrenPage />} />
             <Route path="/parent/notifications" element={<NotificationsPage />} />
+            <Route path="/parent/profile" element={<ParentProfilePage />} />
           </Route>
         </Route>
 

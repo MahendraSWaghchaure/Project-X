@@ -1,13 +1,22 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createSchool, listSchools, type CreateSchoolRequest } from '@/lib/api/schools';
+import {
+  createSchool,
+  listSchools,
+  setSchoolStatus,
+  updateSchool,
+  type CreateSchoolRequest,
+  type UpdateSchoolRequest,
+} from '@/lib/api/schools';
 import { toast } from '@/lib/toastStore';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import type { School } from '@/types/school';
 
 const schema = z.object({
   name: z.string().min(1),
@@ -22,8 +31,79 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
+const editSchema = z.object({
+  name: z.string().min(1),
+  address: z.string().min(1),
+  city: z.string().min(1),
+  state: z.string().optional(),
+  pincode: z.string().optional(),
+  contactPhone: z.string().optional(),
+  contactEmail: z.string().email().optional().or(z.literal('')),
+});
+type EditFormValues = z.infer<typeof editSchema>;
+
+function EditSchoolRow({ school, onDone }: { school: School; onDone: () => void }) {
+  const queryClient = useQueryClient();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<EditFormValues>({
+    resolver: zodResolver(editSchema),
+    defaultValues: {
+      name: school.name,
+      address: school.address,
+      city: school.city,
+      state: school.state ?? '',
+      pincode: school.pincode ?? '',
+      contactPhone: school.contactPhone ?? '',
+      contactEmail: school.contactEmail ?? '',
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (values: UpdateSchoolRequest) => updateSchool(school.id, values),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['schools'] });
+      toast.success('School updated');
+      onDone();
+    },
+    onError: () => toast.error('Could not update school'),
+  });
+
+  return (
+    <form
+      onSubmit={handleSubmit((values) => updateMutation.mutate(values))}
+      className="grid grid-cols-1 gap-3 rounded-md border border-blue-200 bg-blue-50/40 p-3 sm:grid-cols-2"
+    >
+      <Input id={`school-name-${school.id}`} label="School name" error={errors.name?.message} {...register('name')} />
+      <Input id={`school-city-${school.id}`} label="City" error={errors.city?.message} {...register('city')} />
+      <Input
+        id={`school-address-${school.id}`}
+        label="Address"
+        className="sm:col-span-2"
+        error={errors.address?.message}
+        {...register('address')}
+      />
+      <Input id={`school-state-${school.id}`} label="State" {...register('state')} />
+      <Input id={`school-pincode-${school.id}`} label="Pincode" {...register('pincode')} />
+      <Input id={`school-contact-phone-${school.id}`} label="Contact phone" {...register('contactPhone')} />
+      <Input id={`school-contact-email-${school.id}`} label="Contact email" type="email" {...register('contactEmail')} />
+      <div className="flex gap-2 sm:col-span-2">
+        <Button type="submit" isLoading={isSubmitting}>
+          Save
+        </Button>
+        <Button type="button" variant="secondary" onClick={onDone}>
+          Cancel
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 export function SchoolsPage() {
   const queryClient = useQueryClient();
+  const [editingId, setEditingId] = useState<number | null>(null);
   const { data: schools, isLoading } = useQuery({ queryKey: ['schools'], queryFn: listSchools });
   const {
     register,
@@ -40,6 +120,16 @@ export function SchoolsPage() {
       toast.success(`${school.name} created`);
     },
     onError: () => toast.error('Could not create school'),
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: ({ schoolId, status }: { schoolId: number; status: 'ACTIVE' | 'SUSPENDED' }) =>
+      setSchoolStatus(schoolId, status),
+    onSuccess: (school) => {
+      queryClient.invalidateQueries({ queryKey: ['schools'] });
+      toast.success(`${school.name} is now ${school.status.toLowerCase()}`);
+    },
+    onError: () => toast.error('Could not change school status'),
   });
 
   return (
@@ -88,19 +178,47 @@ export function SchoolsPage() {
         </CardHeader>
         <CardBody>
           {isLoading && <p className="text-sm text-slate-500">Loading&hellip;</p>}
-          <ul className="divide-y divide-slate-100">
-            {schools?.map((school) => (
-              <li key={school.id} className="flex items-center justify-between py-3">
-                <div>
-                  <p className="font-medium text-slate-900">{school.name}</p>
-                  <p className="text-sm text-slate-500">
-                    {school.city}
-                    {school.address ? ` — ${school.address}` : ''}
-                  </p>
-                </div>
-                <Badge tone={school.status === 'ACTIVE' ? 'success' : 'warning'}>{school.status}</Badge>
-              </li>
-            ))}
+          <ul className="flex flex-col divide-y divide-slate-100">
+            {schools?.map((school) =>
+              editingId === school.id ? (
+                <li key={school.id} className="py-3">
+                  <EditSchoolRow school={school} onDone={() => setEditingId(null)} />
+                </li>
+              ) : (
+                <li key={school.id} className="flex items-center justify-between gap-4 py-3">
+                  <div>
+                    <p className="font-medium text-slate-900">{school.name}</p>
+                    <p className="text-sm text-slate-500">
+                      {school.city}
+                      {school.address ? ` — ${school.address}` : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge tone={school.status === 'ACTIVE' ? 'success' : 'warning'}>{school.status}</Badge>
+                    <Button variant="secondary" onClick={() => setEditingId(school.id)}>
+                      Edit
+                    </Button>
+                    {school.status === 'ACTIVE' ? (
+                      <Button
+                        variant="danger"
+                        isLoading={statusMutation.isPending && statusMutation.variables?.schoolId === school.id}
+                        onClick={() => statusMutation.mutate({ schoolId: school.id, status: 'SUSPENDED' })}
+                      >
+                        Suspend
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="secondary"
+                        isLoading={statusMutation.isPending && statusMutation.variables?.schoolId === school.id}
+                        onClick={() => statusMutation.mutate({ schoolId: school.id, status: 'ACTIVE' })}
+                      >
+                        Reactivate
+                      </Button>
+                    )}
+                  </div>
+                </li>
+              ),
+            )}
             {schools?.length === 0 && <p className="py-3 text-sm text-slate-500">No schools yet.</p>}
           </ul>
         </CardBody>

@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createRoute, listRoutes, assignRoute } from '@/lib/api/routes';
+import { createRoute, listRoutes, assignRoute, updateRouteZone } from '@/lib/api/routes';
 import { listVehicles } from '@/lib/api/vehicles';
 import { listDrivers } from '@/lib/api/drivers';
 import { useAuthStore } from '@/lib/authStore';
@@ -10,6 +11,7 @@ import { toast } from '@/lib/toastStore';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
+import type { Route } from '@/types/school';
 
 const stopSchema = z.object({
   label: z.string().min(1),
@@ -19,9 +21,50 @@ const stopSchema = z.object({
 });
 const schema = z.object({
   name: z.string().min(1),
+  zoneMinRadiusMeters: z.coerce.number().min(0).optional(),
+  zoneMaxRadiusMeters: z.coerce.number().min(0).optional(),
   stops: z.array(stopSchema).min(1, 'Add at least one stop'),
 });
 type FormValues = z.infer<typeof schema>;
+
+function ZoneEditor({ schoolId, route }: { schoolId: number; route: Route }) {
+  const queryClient = useQueryClient();
+  const [min, setMin] = useState(route.zoneMinRadiusMeters ?? 0);
+  const [max, setMax] = useState(route.zoneMaxRadiusMeters ?? 0);
+
+  const zoneMutation = useMutation({
+    mutationFn: () => updateRouteZone(schoolId, route.id, min, max),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['routes', schoolId] });
+      toast.success('Zone updated');
+    },
+    onError: () => toast.error('Could not update zone'),
+  });
+
+  return (
+    <div className="mt-2 flex flex-wrap items-end gap-2 border-t border-slate-100 pt-2">
+      <Input
+        id={`route-zone-min-${route.id}`}
+        label="Zone min (m)"
+        type="number"
+        value={min}
+        onChange={(e) => setMin(Number(e.target.value))}
+        className="w-32"
+      />
+      <Input
+        id={`route-zone-max-${route.id}`}
+        label="Zone max (m)"
+        type="number"
+        value={max}
+        onChange={(e) => setMax(Number(e.target.value))}
+        className="w-32"
+      />
+      <Button type="button" variant="secondary" isLoading={zoneMutation.isPending} onClick={() => zoneMutation.mutate()}>
+        Save zone
+      </Button>
+    </div>
+  );
+}
 
 export function RoutesPage() {
   const schoolId = useAuthStore((state) => state.schoolId);
@@ -59,6 +102,8 @@ export function RoutesPage() {
     mutationFn: (values: FormValues) =>
       createRoute(schoolId!, {
         name: values.name,
+        zoneMinRadiusMeters: values.zoneMinRadiusMeters,
+        zoneMaxRadiusMeters: values.zoneMaxRadiusMeters,
         stops: values.stops.map((stop, index) => ({ ...stop, sequenceNumber: index })),
       }),
     onSuccess: (route) => {
@@ -86,10 +131,18 @@ export function RoutesPage() {
       <Card>
         <CardHeader>
           <CardTitle>Create a route</CardTitle>
+          <p className="mt-1 text-sm text-slate-500">
+            Set a pickup-radius zone (distance from the school) so children can be auto-assigned to the nearest
+            covering route — e.g. Route A covers 0–5km, Route B covers 5–10km.
+          </p>
         </CardHeader>
         <CardBody>
           <form onSubmit={handleSubmit((values) => createMutation.mutate(values))} className="flex flex-col gap-4">
             <Input label="Route name" error={errors.name?.message} {...register('name')} />
+            <div className="grid grid-cols-2 gap-4 sm:w-1/2">
+              <Input label="Zone min (m)" type="number" {...register('zoneMinRadiusMeters')} />
+              <Input label="Zone max (m)" type="number" {...register('zoneMaxRadiusMeters')} />
+            </div>
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-slate-700">Stops (in order)</span>
@@ -103,11 +156,28 @@ export function RoutesPage() {
               </div>
               {fields.map((field, index) => (
                 <div key={field.id} className="grid grid-cols-1 gap-3 rounded-md border border-slate-200 p-3 sm:grid-cols-4">
-                  <Input label="Label" {...register(`stops.${index}.label` as const)} />
-                  <Input label="Latitude" type="number" step="any" {...register(`stops.${index}.latitude` as const)} />
-                  <Input label="Longitude" type="number" step="any" {...register(`stops.${index}.longitude` as const)} />
+                  <Input id={`stop-label-${field.id}`} label="Label" {...register(`stops.${index}.label` as const)} />
+                  <Input
+                    id={`stop-latitude-${field.id}`}
+                    label="Latitude"
+                    type="number"
+                    step="any"
+                    {...register(`stops.${index}.latitude` as const)}
+                  />
+                  <Input
+                    id={`stop-longitude-${field.id}`}
+                    label="Longitude"
+                    type="number"
+                    step="any"
+                    {...register(`stops.${index}.longitude` as const)}
+                  />
                   <div className="flex items-end gap-2">
-                    <Input label="Radius (m)" type="number" {...register(`stops.${index}.radiusMeters` as const)} />
+                    <Input
+                      id={`stop-radius-${field.id}`}
+                      label="Radius (m)"
+                      type="number"
+                      {...register(`stops.${index}.radiusMeters` as const)}
+                    />
                     <Button type="button" variant="danger" onClick={() => remove(index)}>
                       Remove
                     </Button>
@@ -134,7 +204,12 @@ export function RoutesPage() {
             {routes?.map((route) => (
               <li key={route.id} className="rounded-md border border-slate-200 p-3">
                 <p className="font-medium text-slate-900">{route.name}</p>
-                <p className="text-sm text-slate-500">{route.stops.length} stops</p>
+                <p className="text-sm text-slate-500">
+                  {route.stops.length} stops
+                  {route.zoneMinRadiusMeters != null && route.zoneMaxRadiusMeters != null
+                    ? ` · zone ${route.zoneMinRadiusMeters}–${route.zoneMaxRadiusMeters}m from school`
+                    : ' · no zone configured'}
+                </p>
                 <form
                   className="mt-2 flex flex-wrap items-end gap-2"
                   onSubmit={(e) => {
@@ -167,6 +242,7 @@ export function RoutesPage() {
                     Assign
                   </Button>
                 </form>
+                <ZoneEditor schoolId={schoolId!} route={route} />
               </li>
             ))}
             {routes?.length === 0 && <p className="text-sm text-slate-500">No routes yet.</p>}

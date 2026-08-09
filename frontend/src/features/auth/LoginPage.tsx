@@ -8,6 +8,7 @@ import { useAuthStore } from '@/lib/authStore';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Logo } from '@/components/ui/Logo';
 import type { Role } from '@/types/auth';
 
 const schema = z.object({
@@ -45,10 +46,11 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-slate-50 px-4">
+      <Logo size="lg" />
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Sign in to ProjectX</CardTitle>
+          <CardTitle>Sign in</CardTitle>
         </CardHeader>
         <CardBody>
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">

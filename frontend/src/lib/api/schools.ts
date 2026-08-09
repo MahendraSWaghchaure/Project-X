@@ -31,3 +31,25 @@ export function getSchool(schoolId: number): Promise<School> {
 export function createSchool(request: CreateSchoolRequest): Promise<School> {
   return apiClient.post<ApiResponse<School>>('/schools', request).then(unwrap);
 }
+
+export interface UpdateSchoolRequest {
+  name: string;
+  address: string;
+  city: string;
+  state?: string;
+  pincode?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  latitude?: number;
+  longitude?: number;
+  geofenceRadiusMeters?: number;
+  dismissalTime?: string;
+}
+
+export function updateSchool(schoolId: number, request: UpdateSchoolRequest): Promise<School> {
+  return apiClient.patch<ApiResponse<School>>(`/schools/${schoolId}`, request).then(unwrap);
+}
+
+export function setSchoolStatus(schoolId: number, status: 'ACTIVE' | 'SUSPENDED'): Promise<School> {
+  return apiClient.patch<ApiResponse<School>>(`/schools/${schoolId}/status`, { status }).then(unwrap);
+}

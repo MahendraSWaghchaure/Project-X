@@ -14,6 +14,14 @@ export function inviteParent(schoolId: number, email: string, phone?: string): P
     .then(unwrap);
 }
 
+export function listParentsForSchool(schoolId: number): Promise<Parent[]> {
+  return apiClient.get<ApiResponse<Parent[]>>(`/schools/${schoolId}/parents`).then(unwrap);
+}
+
+export function deactivateParent(schoolId: number, parentId: number): Promise<void> {
+  return apiClient.delete<ApiResponse<void>>(`/schools/${schoolId}/parents/${parentId}`).then(unwrap);
+}
+
 export function getMyParentProfile(): Promise<Parent> {
   return apiClient.get<ApiResponse<Parent>>('/parents/me').then(unwrap);
 }

@@ -4,6 +4,7 @@ import com.projectx.common.web.ApiResponse;
 import com.projectx.school.dto.AssignRouteRequest;
 import com.projectx.school.dto.CreateRouteRequest;
 import com.projectx.school.dto.RouteResponse;
+import com.projectx.school.dto.UpdateRouteZoneRequest;
 import com.projectx.school.service.RouteService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -50,5 +51,11 @@ public class RouteController {
     public ApiResponse<RouteResponse> assignRoute(@PathVariable Long schoolId, @PathVariable Long routeId,
                                                     @RequestBody AssignRouteRequest request) {
         return ApiResponse.ok(routeService.assignRoute(schoolId, routeId, request));
+    }
+
+    @PutMapping("/{routeId}/zone")
+    public ApiResponse<RouteResponse> updateZone(@PathVariable Long schoolId, @PathVariable Long routeId,
+                                                   @Valid @RequestBody UpdateRouteZoneRequest request) {
+        return ApiResponse.ok(routeService.updateZone(schoolId, routeId, request));
     }
 }
