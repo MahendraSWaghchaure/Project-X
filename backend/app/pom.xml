@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.projectx</groupId>
+        <artifactId>projectx-backend</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>app</artifactId>
+    <packaging>jar</packaging>
+    <name>ProjectX :: App</name>
+    <description>Bootable Spring Boot application - depends on every module, the only one that gets repackaged into an executable jar</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.projectx</groupId>
+            <artifactId>common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.projectx</groupId>
+            <artifactId>module-identity</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.projectx</groupId>
+            <artifactId>module-school</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.projectx</groupId>
+            <artifactId>module-people</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.projectx</groupId>
+            <artifactId>module-tracking</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.projectx</groupId>
+            <artifactId>module-notification</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.projectx</groupId>
+            <artifactId>module-insurance</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.projectx</groupId>
+            <artifactId>module-payment</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- Spring Boot 4 split Flyway's autoconfiguration out of spring-boot-autoconfigure into
+             its own module - flyway-core alone (below) no longer gets FlywayAutoConfiguration
+             activated, this is what actually wires "run migrations on startup" back in. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-flyway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>projectx-app</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

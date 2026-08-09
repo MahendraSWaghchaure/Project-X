@@ -1,0 +1,27 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+:root {
+  --color-brand: #2563eb;
+  --color-brand-dark: #1d4ed8;
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-border: #e2e8f0;
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+  --color-danger: #dc2626;
+  --color-warning: #d97706;
+  --color-success: #16a34a;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Leaflet's default marker icon lookup breaks under bundlers - see src/lib/leafletIcons.ts for the fix this class supports. */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+}

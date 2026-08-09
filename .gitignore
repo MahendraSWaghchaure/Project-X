@@ -1,0 +1,42 @@
+# --- Java / Maven ---
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+*.log
+.mvn/timing.properties
+
+# --- Node / Frontend ---
+node_modules/
+dist/
+dist-ssr/
+frontend/coverage/
+*.local
+
+# --- Environment / secrets ---
+.env
+.env.*
+!.env.example
+**/application-local.yml
+**/application-local.yaml
+*.pem
+*.key
+!**/src/**/*.key
+
+# --- Docker ---
+docker/data/
+docker/**/volumes/
+
+# --- IDE ---
+.idea/
+.vscode/
+*.iml
+.classpath
+.project
+.settings/
+.factorypath
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini

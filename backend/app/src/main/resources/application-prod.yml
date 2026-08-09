@@ -1,0 +1,22 @@
+# Activate with SPRING_PROFILES_ACTIVE=prod. Every value below is deliberately left with NO
+# default: Spring fails startup with "Could not resolve placeholder" if the env var isn't set,
+# rather than silently falling back to insecure local-dev defaults (ephemeral JWT keys,
+# permissive CORS, the seeded admin password).
+spring:
+  jpa:
+    show-sql: false
+
+projectx:
+  security:
+    jwt:
+      private-key-location: ${JWT_PRIVATE_KEY_LOCATION}
+      public-key-location: ${JWT_PUBLIC_KEY_LOCATION}
+    cors:
+      allowed-origins: ${CORS_ALLOWED_ORIGINS}
+
+  tracking:
+    ingest:
+      shared-secret: ${TRACKING_INGEST_SECRET}
+
+  bootstrap:
+    admin-password: ${PLATFORM_ADMIN_PASSWORD}

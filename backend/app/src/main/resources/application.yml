@@ -1,0 +1,90 @@
+spring:
+  application:
+    name: projectx-app
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/projectx}
+    username: ${DB_USERNAME:projectx}
+    password: ${DB_PASSWORD:projectx}
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      # Flyway owns the schema - Hibernate only ever validates it matches the entities, never generates DDL.
+      ddl-auto: validate
+    properties:
+      hibernate:
+        # Hibernate ORM 6+ auto-registers PostGIS spatial types onto the standard PostgreSQL
+        # dialect as long as hibernate-spatial is on the classpath - no separate "spatial dialect"
+        # class needed (that was a Hibernate 5-era requirement).
+        format_sql: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: false
+    # Deliberately no explicit `locations` override - every module's db/migration/*.sql ships
+    # inside that module's own jar under the same classpath:db/migration prefix, and Flyway scans
+    # across all jars on the classpath for it. Version numbers are partitioned per module (see
+    # each module's V*__*.sql header comment) so there's no collision risk.
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  mail:
+    host: ${SMTP_HOST:}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  health:
+    # Email is best-effort throughout this app (NotificationDispatchService logs SKIPPED_NOT_CONFIGURED
+    # rather than failing) - SMTP reachability shouldn't flip the whole app's health to DOWN, especially
+    # since spring.mail.host resolving to an empty string in local/dev still activates this indicator.
+    mail:
+      enabled: false
+
+projectx:
+  security:
+    jwt:
+      # Leave unset in local dev - an ephemeral RSA keypair is generated at startup (see
+      # module-identity's JwtKeyConfig). Point these at real PEM files in every other environment.
+      private-key-location: ${JWT_PRIVATE_KEY_LOCATION:}
+      public-key-location: ${JWT_PUBLIC_KEY_LOCATION:}
+      access-token-ttl: 15m
+      refresh-token-ttl: 30d
+    cors:
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+  tracking:
+    ingest:
+      # Required in any environment a real Traccar server points at - see TrackingIngestController.
+      shared-secret: ${TRACKING_INGEST_SECRET:}
+    delay-monitor:
+      interval-ms: 120000
+
+  notification:
+    sms:
+      enabled: ${TWILIO_ENABLED:false}
+      account-sid: ${TWILIO_ACCOUNT_SID:}
+      auth-token: ${TWILIO_AUTH_TOKEN:}
+      from-number: ${TWILIO_FROM_NUMBER:}
+    email:
+      enabled: ${SMTP_ENABLED:false}
+      from-address: ${SMTP_FROM_ADDRESS:no-reply@projectx.local}
+
+  bootstrap:
+    admin-email: ${PLATFORM_ADMIN_EMAIL:admin@projectx.local}
+    admin-password: ${PLATFORM_ADMIN_PASSWORD:changeme123}

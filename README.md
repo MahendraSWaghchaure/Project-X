@@ -1,145 +1,67 @@
-# Project-X
-ProjectX is a smart school bus tracking system for parents, school admins, and drivers, ensuring student safety, real-time GPS tracking, and automated alerts. Built with Spring Boot, .NET, React.js, and MongoDB, it offers live tracking, check-in/out logging, driver payment management, and emergency alerts via web &amp; mobile apps. 🚀
+# ProjectX — School Transport, Accounted For
 
+50-60% of Indian parents put their kids on privately-run school vans/buses with essentially zero
+visibility into where the vehicle is or whether it ran on time. ProjectX makes that accountable:
+live GPS tracking (Swiggy/Zomato-style), arrival and delay alerts, driver/vehicle/child insurance
+records, and a payment/payroll layer — for four kinds of users (parents, drivers, school admins,
+and us as the platform operator) plus the schools they belong to.
 
+This was a solo-built prototype for a year (Spring Boot 2.7, no real domain model, placeholder
+frontend pages). It's now been rebuilt from the ground up as an enterprise-track modular monolith:
+**Java 25 + Spring Boot 4 + Spring Security 7** on the backend, **React 19 + TypeScript + Vite**
+on the frontend. See `backend/README.md` and `frontend/README.md` for the details of each side.
 
-# 🚍 ProjectX - Smart School Bus Tracking System
+## Repo layout
 
-## 📌 Overview
-ProjectX is a **full-stack web and mobile application** designed to enhance **student safety and school transportation management**. It enables **parents, school administrators, and drivers** to efficiently **track school buses, receive real-time notifications, and manage driver payments**.
-
-## 🔹 Key Features
-- ✅ **Live Bus Tracking** – Track real-time GPS locations of school buses.
-- ✅ **Arrival & Departure Alerts** – Get notified when the bus reaches school, home, or designated stops.
-- ✅ **Student Check-In/Out System** – Log student boarding & deboarding securely.
-- ✅ **Driver Management** – Track driver records, work hours, payments, and performance.
-- ✅ **Emergency Alerts** – Quick response notifications for delays, route changes, or incidents.
-- ✅ **Admin Dashboard** – Manage routes, student records, driver assignments, and payments.
-- ✅ **Mobile & Web Support** – Works on both smartphones and browsers for easy access.
-
-## 🛠 Tech Stack
-### **Frontend:**
-- React.js (UI Development)
-- Bootstrap (Styling & Layout)
-- JavaScript, HTML5, CSS3
-- React Router (Navigation)
-
-### **Backend:**
-- Spring Boot (Java) – RESTful API Development
-- ASP.NET Core (C#) – Additional Services & API Integration
-
-### **Database:**
-- MongoDB (NoSQL Database for scalable storage) & MySQL for testing purpose
-
-### **Authentication & Security:**
-- JSON Web Token (JWT) for secure API access
-- OAuth2 for authentication & authorization
-
-### **Real-Time Features:**
-- Google Maps API for location tracking
-- WebSockets (Socket.io) for live updates
-
-### **Cloud & DevOps:**
-- AWS (Hosting & Deployment)
-- Docker & Kubernetes (Containerization & Orchestration)
-- Jenkins (CI/CD Automation)
-
-## 🚀 Getting Started
-### Prerequisites
-Ensure you have the following installed:
-- **Node.js** & **npm** (for frontend development)
-- **Java JDK 11+** (for Spring Boot backend)
-- **MongoDB** (for database)
-- **Docker** (for containerization, optional)
-
-### Installation
-#### **1. Clone the Repository**
-```sh
- git clone https://github.com/MahendraSWaghchaure/Project-X.git
- cd Project-X
+```
+backend/     Multi-module Maven project - see backend/README.md for the module map
+frontend/    React + TS + Vite - see frontend/README.md
+docker-compose.yml   Postgres+PostGIS, Redis, Traccar (GPS protocol normalization)
 ```
 
-#### **2. Set Up Backend (Spring Boot & .NET Core)**
+## Quick start
+
 ```sh
- cd backend
- mvn clean install  # For Spring Boot
- dotnet restore      # For .NET Core (if applicable)
+docker compose up -d postgres redis
+
+cd backend && mvn -pl app -am spring-boot:run   # http://localhost:8080, Swagger at /swagger-ui.html
+
+# separate terminal
+cd frontend && npm install && npm run dev        # http://localhost:5173
 ```
 
-#### **3. Set Up Frontend (React.js)**
-```sh
- cd frontend
- npm install
- npm start
-```
+Log in as the seeded platform admin (`admin@projectx.local` / `changeme123` by default — see
+`backend/README.md` for how to override and why you must before this goes anywhere near a shared
+environment) to onboard your first school.
 
-#### **4. Run MongoDB Locally (Optional)**
-```sh
- mongod --dbpath /your/db/path
-```
+**This machine had no Maven, Node, or Docker installed** when this was built, so none of the above
+has actually been run and verified end-to-end yet — please run it and report back anything that
+doesn't come up cleanly.
 
-### Running the Application
-- **Start Backend:**
-```sh
- mvn spring-boot:run  # Spring Boot
- dotnet run           # .NET Core
-```
+## What's real vs. what's a stub
 
-- **Start Frontend:**
-```sh
- npm start
-```
+Built and functional this pass: identity/auth (JWT + refresh, role-based access), school/vehicle/
+route/driver/parent/child onboarding (including the invite-a-parent flow), trip lifecycle (driver
+starts/completes a trip, marks children boarded/dropped), live GPS ingestion via a Traccar webhook,
+geofence-based arrival/approaching/end-of-day-delay detection, notification dispatch (SMS via
+Twilio / email via SMTP, both off by default locally) with a full delivery audit log, and a
+parent-facing live tracking map with a home-arrival confirmation button.
 
-## Temporary login
-## 📖 API Endpoints
-### **Authentication**
-| Method | Endpoint        | Description |
-|--------|---------------|-------------|
-| POST   | /api/auth/login  | User login |
-| POST   | /api/auth/signup | User registration |
-| GET    | /api/auth/me     | Get current user details |
+Deliberately left as data-model-only stubs (see each module's `pom.xml` description for why):
+insurance policy *workflows* (renewal/expiry escalation — the policy records and linkage to
+child/driver/vehicle exist), Stripe parent-fee billing, and driver payroll/overtime-incentive
+computation. These were called out as phase 2 when the build plan was agreed, precisely so the
+core tracking/alert loop could be built deep rather than everything built shallow.
 
-### **Bus Tracking & Management**
-| Method | Endpoint          | Description |
-|--------|------------------|-------------|
-| GET    | /api/buses        | Get list of all buses |
-| GET    | /api/buses/:id    | Get details of a specific bus |
-| POST   | /api/buses        | Add a new bus |
-| PUT    | /api/buses/:id    | Update bus details |
-| DELETE | /api/buses/:id    | Remove a bus |
+## Architecture decisions worth knowing about
 
-### **Driver & Payment Management**
-| Method | Endpoint          | Description |
-|--------|------------------|-------------|
-| GET    | /api/drivers      | Get all drivers |
-| GET    | /api/drivers/:id  | Get driver details |
-| POST   | /api/payments     | Process driver payment |
-
-## 📸 Screenshots
-*(Add screenshots of UI here for better visualization)*
-
-## 🏗 Future Enhancements
-- 📌 AI-powered route optimization for efficiency.
-- 📌 Integration with **SMS & Email notifications**.
-- 📌 Multi-language support for a broader user base.
-- 📌 Blockchain-based **secure attendance tracking**.
-
-## 🤝 Contributing
-We welcome contributions! If you would like to enhance ProjectX:
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature-name`)
-3. Commit your changes (`git commit -m 'Added new feature'`)
-4. Push to the branch (`git push origin feature-name`)
-5. Create a pull request
-
-## 📜 License
-This project is licensed under the **MIT License**.
-
-## 📬 Contact
-For any queries, feel free to reach out:
-📧 Email: mahendra.s.waghchaure@gmail.com  
-🔗 LinkedIn: [Mahendra Waghchaure](https://www.linkedin.com/in/mahendra-waghchaure/)  
-💻 GitHub: [MahendraSWaghchaure](https://github.com/MahendraSWaghchaure)
-
----
-🚀 **ProjectX is built with performance, security, and scalability in mind, making school transportation smarter & safer!**
+- **Modular monolith, not microservices** — one deployable, Maven-module-enforced boundaries.
+  Splittable later if a specific module (most likely `module-tracking`) needs to scale
+  independently.
+- **GPS hardware via Traccar** — dedicated in-vehicle trackers speak proprietary protocols;
+  Traccar (self-hosted, open source) normalizes ~170 of them and forwards clean JSON to our
+  ingestion webhook, rather than us reimplementing device protocols.
+- **PostgreSQL + PostGIS** — one relational store, native geospatial queries power geofencing.
+- **Cross-module references are ids, not JPA relationships** — e.g. `Vehicle.insurancePolicyId` is
+  a plain `Long`, not a `@ManyToOne` into `module-insurance`'s entity. Keeps modules independently
+  extractable into real services later without an entity-graph untangling project.

@@ -1,0 +1,53 @@
+name: projectx
+
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: projectx
+      POSTGRES_USER: projectx
+      POSTGRES_PASSWORD: projectx
+    ports:
+      - "5432:5432"
+    volumes:
+      - projectx-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U projectx"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - projectx-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Protocol-normalization layer for GPS hardware trackers (see backend/README.md "GPS ingestion"
+  # section) - devices report to Traccar in whatever proprietary protocol they speak, and Traccar
+  # forwards normalized positions to the app's /tracking/ingest/traccar/{sharedSecret} webhook.
+  # Configure the forward under Traccar's web UI: Settings -> Server -> Position Forwarding,
+  # url=http://app:8080/tracking/ingest/traccar/<TRACKING_INGEST_SECRET>, format=json,
+  # and enable "forward.additional" so device.uniqueId is included (required for vehicle lookup).
+  traccar:
+    image: traccar/traccar:latest
+    ports:
+      - "8082:8082"   # web UI
+      - "5000-5150:5000-5150/tcp"  # device protocol listener ports (TCP)
+      - "5000-5150:5000-5150/udp"
+    volumes:
+      - projectx-traccar-data:/opt/traccar/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  projectx-postgres-data:
+  projectx-redis-data:
+  projectx-traccar-data:
