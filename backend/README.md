@@ -34,7 +34,7 @@ module's own `pom.xml`).
 | `module-people` | `DriverProfile` (incl. independent self-registration + claim), `ParentProfile`, `Child` (incl. geo auto-route-assignment) | V20-V29 |
 | `module-tracking` | `Trip` lifecycle, Traccar ingestion, geofencing, live-location cache/broadcast, delay monitor | V30-V39 |
 | `module-notification` | SMS/email/push dispatch, notification audit log, event listeners | V40-V49 |
-| `module-insurance` | `InsurancePolicy` (data model only - see module's pom.xml description) | V50-V59 |
+| `module-insurance` | `InsurancePolicy` CRUD (create/list/get, scoped by school) for child/driver/vehicle coverage | V50-V59 |
 | `module-payment` | Fee schedules/invoices, Razorpay Checkout payments, late-fee waivers, driver bank details + RazorpayX payroll disbursement | V60-V69 |
 | `module-grievance` | `Grievance` intake/resolution, live STOMP push | V70-V79 |
 | `app` | `@SpringBootApplication`, config, bootstrap seeding, OpenAPI, the only module that gets repackaged into a runnable JAR | — |

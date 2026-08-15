@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/lib/authStore';
 import { cn } from '@/lib/cn';
 import { Logo } from '@/components/ui/Logo';
@@ -23,15 +24,18 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { label: 'Routes', to: '/school-admin/routes' },
     { label: 'Students & Parents', to: '/school-admin/children' },
     { label: 'Trips', to: '/school-admin/trips' },
+    { label: 'Insurance', to: '/school-admin/insurance' },
     { label: 'Grievances', to: '/school-admin/grievances' },
     { label: 'Payments', to: '/school-admin/payments' },
   ],
   DRIVER: [
+    { label: 'Dashboard', to: '/driver/dashboard' },
     { label: "Today's Trips", to: '/driver/trips' },
     { label: 'Grievances', to: '/driver/grievances' },
     { label: 'Payroll', to: '/driver/payroll' },
   ],
   PARENT: [
+    { label: 'Dashboard', to: '/parent/dashboard' },
     { label: 'Track Bus', to: '/parent/track' },
     { label: 'My Children', to: '/parent/children' },
     { label: 'Notifications', to: '/parent/notifications' },
@@ -48,8 +52,27 @@ const ROLE_LABEL: Record<Role, string> = {
   PARENT: 'Parent',
 };
 
+function useClock() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  return now;
+}
+
+const DATE_FORMAT = new Intl.DateTimeFormat('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+const TIME_FORMAT = new Intl.DateTimeFormat('en-IN', {
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hour12: true,
+});
+
 export function AppShell() {
   const { role, email, clearSession } = useAuthStore();
+  const navigate = useNavigate();
+  const now = useClock();
   const navItems = role ? NAV_BY_ROLE[role] : [];
 
   return (
@@ -77,11 +100,30 @@ export function AppShell() {
       </aside>
       <div className="flex flex-1 flex-col">
         <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-3">
-          <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-            {role ? ROLE_LABEL[role] : ''}
-          </span>
           <div className="flex items-center gap-3">
-            {email && <span className="text-sm text-slate-600">{email}</span>}
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              {role ? ROLE_LABEL[role] : ''}
+            </span>
+            <span className="hidden items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500 sm:flex">
+              <span>{DATE_FORMAT.format(now)}</span>
+              <span className="text-slate-300">&middot;</span>
+              <span className="tabular-nums">{TIME_FORMAT.format(now)}</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            {role === 'PARENT' && (
+              <button
+                onClick={() => navigate('/parent/track')}
+                title="Track bus live"
+                className="flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                  <path d="M10 2a6 6 0 0 0-6 6c0 4.5 6 10 6 10s6-5.5 6-10a6 6 0 0 0-6-6Zm0 8.25A2.25 2.25 0 1 1 10 5.75a2.25 2.25 0 0 1 0 4.5Z" />
+                </svg>
+                Track bus
+              </button>
+            )}
+            {email && <span className="hidden text-sm text-slate-600 md:inline">{email}</span>}
             <button
               onClick={() => {
                 clearSession();

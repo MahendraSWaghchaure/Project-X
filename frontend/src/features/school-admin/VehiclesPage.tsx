@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -174,6 +175,15 @@ export function VehiclesPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge tone={vehicle.status === 'ACTIVE' ? 'success' : 'warning'}>{vehicle.status}</Badge>
+                    {vehicle.insurancePolicyId ? (
+                      <Badge tone="info">Insured</Badge>
+                    ) : (
+                      <Link to="/school-admin/insurance">
+                        <Badge tone="neutral" className="cursor-pointer hover:bg-slate-200">
+                          Not insured
+                        </Badge>
+                      </Link>
+                    )}
                     <Button variant="secondary" onClick={() => setEditingId(vehicle.id)}>
                       Edit
                     </Button>

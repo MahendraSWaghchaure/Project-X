@@ -3,9 +3,12 @@ import { PublicHeader } from '@/components/layout/PublicHeader';
 import { PublicFooter } from '@/components/layout/PublicFooter';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody } from '@/components/ui/Card';
-import { BusIllustration } from '@/components/illustrations/BusIllustration';
-import { FamilyIllustration } from '@/components/illustrations/FamilyIllustration';
 import { ParentIcon, ChildIcon, SchoolIcon, DriverIcon } from '@/components/illustrations/RoleIcons';
+
+// Real photos, not stock illustrations - both from Wikimedia Commons, freely licensed with
+// attribution given in the footer (see PublicFooter's "Photo credits" line).
+const HERO_BUS_PHOTO_URL = 'https://upload.wikimedia.org/wikipedia/commons/4/4f/Tempo_Matador_school_bus%2C_Pune.jpg';
+const CHILDREN_PHOTO_URL = 'https://upload.wikimedia.org/wikipedia/commons/1/13/Indian_school_boys_and_girl.jpg';
 
 const BENEFITS = [
   {
@@ -82,7 +85,12 @@ export function HomePage() {
                 </Link>
               </div>
             </div>
-            <BusIllustration className="mx-auto w-full max-w-md" />
+            <img
+              src={HERO_BUS_PHOTO_URL}
+              alt="A privately-run school bus in Pune, India"
+              className="mx-auto w-full max-w-md rounded-2xl object-cover shadow-lg"
+              loading="eager"
+            />
           </div>
         </section>
 
@@ -100,7 +108,12 @@ export function HomePage() {
               </p>
             </div>
             <div className="flex flex-col items-center gap-6">
-              <FamilyIllustration className="w-48" />
+              <img
+                src={CHILDREN_PHOTO_URL}
+                alt="Schoolchildren in India"
+                className="h-56 w-56 rounded-full object-cover shadow-lg"
+                loading="lazy"
+              />
               <div className="grid w-full grid-cols-2 gap-4">
                 {[
                   ['Live tracking', 'Every vehicle, every trip'],

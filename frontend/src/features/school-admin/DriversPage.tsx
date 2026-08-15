@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -249,6 +250,15 @@ export function DriversPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge tone={driver.employmentStatus === 'ACTIVE' ? 'success' : 'warning'}>{driver.employmentStatus}</Badge>
+                    {driver.insurancePolicyId ? (
+                      <Badge tone="info">Insured</Badge>
+                    ) : (
+                      <Link to="/school-admin/insurance">
+                        <Badge tone="neutral" className="cursor-pointer hover:bg-slate-200">
+                          Not insured
+                        </Badge>
+                      </Link>
+                    )}
                     <Button variant="secondary" onClick={() => setEditingId(driver.id)}>
                       Edit
                     </Button>

@@ -20,8 +20,8 @@ type FormValues = z.infer<typeof schema>;
 const HOME_BY_ROLE: Record<Role, string> = {
   PLATFORM_ADMIN: '/platform-admin/dashboard',
   SCHOOL_ADMIN: '/school-admin/dashboard',
-  DRIVER: '/driver/trips',
-  PARENT: '/parent/track',
+  DRIVER: '/driver/dashboard',
+  PARENT: '/parent/dashboard',
 };
 
 export function LoginPage() {

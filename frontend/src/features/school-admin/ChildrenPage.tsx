@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -194,6 +195,15 @@ export function ChildrenPage() {
                   <div className="flex items-center gap-2">
                     <Badge tone={child.status === 'ACTIVE' ? 'success' : 'warning'}>{child.status}</Badge>
                     <span className="text-sm text-slate-500">{child.routeId ? `Route #${child.routeId}` : 'No route yet'}</span>
+                    {child.insurancePolicyId ? (
+                      <Badge tone="info">Insured</Badge>
+                    ) : (
+                      <Link to="/school-admin/insurance">
+                        <Badge tone="neutral" className="cursor-pointer hover:bg-slate-200">
+                          Not insured
+                        </Badge>
+                      </Link>
+                    )}
                     {!child.routeId && (
                       <Button
                         variant="secondary"

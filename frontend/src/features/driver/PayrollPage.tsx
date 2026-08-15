@@ -16,7 +16,7 @@ const schema = z.object({
   accountNumber: z.string().regex(/^\d{6,20}$/, 'must be 6-20 digits'),
   ifscCode: z
     .string()
-    .regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'must be a valid IFSC code, e.g. HDFC0001234')
+    .regex(/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/, 'must be a valid IFSC code, e.g. HDFC0001234')
     .transform((v) => v.toUpperCase()),
 });
 type FormValues = z.infer<typeof schema>;

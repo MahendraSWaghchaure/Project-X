@@ -8,6 +8,7 @@ import { toast } from '@/lib/toastStore';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
 import type { Child } from '@/types/people';
 
 const schema = z.object({
@@ -130,12 +131,18 @@ export function ParentChildrenPage() {
                       {child.firstName} {child.lastName}
                     </p>
                     <p className="text-sm text-slate-500">
+                      {child.classSection ? `${child.classSection} · ` : ''}
                       {child.routeId ? `Assigned to route #${child.routeId}` : 'Not yet assigned to a route by the school'}
                     </p>
                   </div>
-                  <Button variant="secondary" onClick={() => setEditingId(child.id)}>
-                    Edit
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Badge tone={child.insurancePolicyId ? 'info' : 'neutral'}>
+                      {child.insurancePolicyId ? 'Insured' : 'Not insured'}
+                    </Badge>
+                    <Button variant="secondary" onClick={() => setEditingId(child.id)}>
+                      Edit
+                    </Button>
+                  </div>
                 </li>
               ),
             )}

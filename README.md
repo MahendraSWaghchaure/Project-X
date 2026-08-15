@@ -72,8 +72,15 @@ Playwright for the frontend), not just written and assumed to work:
   calls, recorded with a transaction reference. Both Razorpay integrations are off by default and
   fail *honestly* (a clear "not configured" or the real gateway error) rather than faking success
   — see `backend/README.md` for how to turn them on with real credentials.
-- **Insurance** — data model only (policy records + linkage to child/driver/vehicle exist);
-  renewal/expiry-escalation workflows aren't built.
+- **Insurance** — school admin creates a policy (provider, policy number, coverage, dates) for a
+  child, driver, or vehicle and links it in one step; sees every policy for the school with a
+  within-30-days expiry warning; Insured/Not insured shows on the relevant rosters. Automated
+  renewal reminders and expiry escalation (beyond that client-side warning) aren't built.
+- **Dashboards** — a real landing dashboard per role (not a stub): parent (children, fee-due/overdue
+  status, open grievances, notifications), school admin (fleet/roster stats, today's trips, revenue
+  this month, payroll cycle status, independent-driver-pool size), platform admin (cross-school
+  stats, open grievances, pending waivers), driver (today's trips, payroll status, bank-details
+  check). The header shows a live clock everywhere and a one-click bus-tracking shortcut for parents.
 - **Mobile** — the web app wrapped with Capacitor. Android is fully working (a real debug APK
   builds locally via Gradle); iOS is scaffolded but can only be built from Xcode on macOS.
 

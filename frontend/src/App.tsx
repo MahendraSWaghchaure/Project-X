@@ -23,11 +23,14 @@ import { ChildrenPage as SchoolAdminChildrenPage } from '@/features/school-admin
 import { TripsPage } from '@/features/school-admin/TripsPage';
 import { GrievancesPage as SchoolAdminGrievancesPage } from '@/features/school-admin/GrievancesPage';
 import { PaymentsPage as SchoolAdminPaymentsPage } from '@/features/school-admin/PaymentsPage';
+import { InsurancePage as SchoolAdminInsurancePage } from '@/features/school-admin/InsurancePage';
 
+import { DriverDashboardPage } from '@/features/driver/DashboardPage';
 import { DriverTripsPage } from '@/features/driver/DriverTripsPage';
 import { DriverGrievancesPage } from '@/features/driver/GrievancesPage';
 import { DriverPayrollPage } from '@/features/driver/PayrollPage';
 
+import { ParentDashboardPage } from '@/features/parent/DashboardPage';
 import { TrackBusPage } from '@/features/parent/TrackBusPage';
 import { ParentChildrenPage } from '@/features/parent/ChildrenPage';
 import { NotificationsPage } from '@/features/parent/NotificationsPage';
@@ -71,11 +74,13 @@ export default function App() {
             <Route path="/school-admin/trips" element={<TripsPage />} />
             <Route path="/school-admin/grievances" element={<SchoolAdminGrievancesPage />} />
             <Route path="/school-admin/payments" element={<SchoolAdminPaymentsPage />} />
+            <Route path="/school-admin/insurance" element={<SchoolAdminInsurancePage />} />
           </Route>
         </Route>
 
         <Route element={<ProtectedRoute allowedRoles={['DRIVER']} />}>
           <Route element={<AppShell />}>
+            <Route path="/driver/dashboard" element={<DriverDashboardPage />} />
             <Route path="/driver/trips" element={<DriverTripsPage />} />
             <Route path="/driver/grievances" element={<DriverGrievancesPage />} />
             <Route path="/driver/payroll" element={<DriverPayrollPage />} />
@@ -84,6 +89,7 @@ export default function App() {
 
         <Route element={<ProtectedRoute allowedRoles={['PARENT']} />}>
           <Route element={<AppShell />}>
+            <Route path="/parent/dashboard" element={<ParentDashboardPage />} />
             <Route path="/parent/track" element={<TrackBusPage />} />
             <Route path="/parent/children" element={<ParentChildrenPage />} />
             <Route path="/parent/notifications" element={<NotificationsPage />} />

@@ -93,10 +93,19 @@ public class FeeInvoiceService {
                 .toList();
     }
 
-    /** The next month with no invoice yet: one past the latest existing invoice, or the current month if none exist (or the latest is already in the past). */
+    /**
+     * The next month that still needs to be paid: one past the latest *paid* invoice, or the
+     * current month if nothing's paid yet (or the latest paid month is already in the past).
+     * Deliberately keyed off PAID rather than "latest existing invoice" - an abandoned or
+     * not-yet-verified advance-payment attempt already creates unpaid invoice rows further out,
+     * and if this looked at those instead, every repeated (abandoned) attempt would push the
+     * start month further out again, piling up orphaned unpaid invoices instead of reusing the
+     * ones already sitting there unpaid.
+     */
     private YearMonth nextUnbilledMonth(Long childId) {
         YearMonth currentMonth = YearMonth.now();
         return feeInvoiceRepository.findByChildIdOrderByBillingMonthDesc(childId).stream()
+                .filter(i -> i.getStatus() == FeeInvoiceStatus.PAID)
                 .findFirst()
                 .map(i -> YearMonth.from(i.getBillingMonth()))
                 .filter(latest -> !latest.isBefore(currentMonth))

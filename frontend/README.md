@@ -5,6 +5,10 @@ react-leaflet (incl. a click-to-drop-a-pin location picker), STOMP-over-SockJS f
 tracking and live grievance-status push, Razorpay Checkout (loaded from their CDN, not an npm
 package) for payments. Also ships as an Android app via Capacitor - see `MOBILE.md`.
 
+The public marketing pages use real photos (sourced from Wikimedia Commons under CC BY / CC BY-SA,
+credited in the footer) rather than stock imagery of unrelated people; nothing inside the
+authenticated product claims to show a photo of an actual enrolled child, driver, or vehicle.
+
 ## Setup
 
 ```sh
@@ -23,7 +27,7 @@ src/
   app/                providers (TanStack Query)
   components/
     ui/               hand-rolled Tailwind primitives (Button, Card, Input, Badge, LocationPicker)
-    illustrations/     hand-drawn SVG bus/family/role icons (no stock photos - see below)
+    illustrations/     hand-drawn SVG per-role icons (used on the home page's benefit cards)
     grievance/          shared GrievanceStatusBadge
     layout/             AppShell (role-based nav), ProtectedRoute (role guard), PublicHeader/Footer
   features/            one folder per role: platform-admin, school-admin, driver, parent, auth, public
@@ -50,8 +54,20 @@ Everything below is functional against the real backend and has been exercised i
 
 - **Auth** — login/JWT refresh, invite-accept flow, role-based routing for all four roles.
 - **Branding & marketing** — Sunju logo/branding throughout; a full home page (hero, about, vision,
-  per-role benefits) with hand-drawn SVG illustrations rather than stock photography (this product
-  handles children's data, so no placeholder photos of real people).
+  per-role benefits) with real, freely-licensed photos (credited in the footer) plus hand-drawn SVG
+  icons for the compact per-role benefit cards.
+- **Dashboards** — a real landing dashboard for every role, not just a stat-card afterthought: parent
+  (children summary, fee-due/overdue banner, open grievances, recent notifications, quick actions);
+  school admin (fleet/roster stats, today's trips, open grievances, this month's revenue, payroll
+  cycle status, independent-driver-pool size); platform admin (cross-school stats, open grievances,
+  pending late-fee waivers, independent-driver-pool size); driver (today's trips, last payroll
+  status, bank-details-on-file check, open grievances).
+- **Header** — a live clock (date + seconds-resolution time) on every authenticated page, and a
+  one-click "Track bus" shortcut in the header when logged in as a parent, from any page.
+- **Insurance** — school admin can add a policy (provider, policy number, coverage, start/end date)
+  for a child, driver, or vehicle in one step (creates the policy and links it), see all policies
+  for the school with an expiring-within-30-days warning, and see an Insured/Not insured badge on
+  the children/drivers/vehicles rosters and the parent's own children page.
 - **Full CRUD** — platform admin manages schools (create/edit/suspend); school admin manages
   vehicles/drivers/children/parents (create/edit/deactivate) and configures route pickup-radius
   zones; parents edit their own profile and their children's details.
@@ -71,9 +87,6 @@ Everything below is functional against the real backend and has been exercised i
   manually trigger the three billing jobs. Driver: enter bank details, view salary history
   including the transaction reference once actually disbursed.
 - **Trips** — driver start/complete a trip + mark each child boarded/dropped.
-
-Not built: insurance policy management UI (matches the backend, which is data-model-only there
-too).
 
 ## Testing
 

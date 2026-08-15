@@ -14,7 +14,7 @@
     <artifactId>module-insurance</artifactId>
     <packaging>jar</packaging>
     <name>ProjectX :: Insurance</name>
-    <description>Insurance policy records for children/drivers/vehicles. Data model only this phase - renewal workflows and expiry escalation are phase 2.</description>
+    <description>Insurance policy records for children/drivers/vehicles, with create/list/get endpoints. Automated renewal workflows and expiry escalation (beyond the frontend's client-side "expiring soon" banner) are phase 2.</description>
 
     <dependencies>
         <dependency>
