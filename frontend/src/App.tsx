@@ -1,9 +1,13 @@
 import { Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { AppShell } from '@/components/layout/AppShell';
+import { ScrollToTop } from '@/components/layout/ScrollToTop';
 import { Toaster } from '@/components/ui/Toaster';
 
 import { HomePage } from '@/features/public/HomePage';
+import { AboutPage } from '@/features/public/AboutPage';
+import { VisionPage } from '@/features/public/VisionPage';
+import { BenefitsPage } from '@/features/public/BenefitsPage';
 import { NotFoundPage } from '@/features/public/NotFoundPage';
 import { UnauthorizedPage } from '@/features/public/UnauthorizedPage';
 import { DriverRegisterPage } from '@/features/public/DriverRegisterPage';
@@ -42,9 +46,13 @@ import { ParentPaymentsPage } from '@/features/parent/PaymentsPage';
 export default function App() {
   return (
     <>
+      <ScrollToTop />
       <Routes>
         {/* Public */}
         <Route path="/" element={<HomePage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/vision" element={<VisionPage />} />
+        <Route path="/benefits" element={<BenefitsPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/accept-invite/:token" element={<AcceptInvitePage />} />
         <Route path="/driver/register" element={<DriverRegisterPage />} />

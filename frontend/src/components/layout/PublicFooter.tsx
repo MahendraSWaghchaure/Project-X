@@ -14,9 +14,9 @@ export function PublicFooter() {
         <div>
           <p className="text-sm font-semibold text-white">Company</p>
           <ul className="mt-3 flex flex-col gap-2 text-sm">
-            <li><a href="#about" className="hover:text-white">About</a></li>
-            <li><a href="#vision" className="hover:text-white">Vision</a></li>
-            <li><a href="#benefits" className="hover:text-white">Benefits</a></li>
+            <li><Link to="/about" className="hover:text-white">About</Link></li>
+            <li><Link to="/vision" className="hover:text-white">Vision</Link></li>
+            <li><Link to="/benefits" className="hover:text-white">Benefits</Link></li>
           </ul>
         </div>
         <div>

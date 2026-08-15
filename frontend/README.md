@@ -54,9 +54,11 @@ Everything below is functional against the real backend and has been exercised i
 (Playwright), not just written and assumed to work:
 
 - **Auth** — login/JWT refresh, invite-accept flow, role-based routing for all four roles.
-- **Branding & marketing** — Sunju logo/branding throughout; a full home page (hero, about, vision,
-  per-role benefits) with real, freely-licensed photos (credited in the footer) plus hand-drawn SVG
-  icons for the compact per-role benefit cards.
+- **Branding & marketing** — a proper multi-page marketing site (`/`, `/about`, `/vision`,
+  `/benefits`, sharing one header/footer/CTA via `PublicLayout`), not one long single-page
+  scroll. Real, freely-licensed photos (credited in the footer) plus hand-drawn SVG icons for
+  the compact per-role benefit cards; the home page's hero is a self-drawn live-tracking mockup
+  rather than a stock photo standing in for the feature.
 - **Dashboards** — a real landing dashboard for every role, not just a stat-card afterthought: parent
   (children summary, fee-due/overdue banner, open grievances, recent notifications, quick actions);
   school admin (fleet/roster stats, today's trips, open grievances, this month's revenue, payroll

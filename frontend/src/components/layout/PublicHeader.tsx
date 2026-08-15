@@ -1,12 +1,13 @@
-import { Link } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { Logo } from '@/components/ui/Logo';
 import { Button } from '@/components/ui/Button';
+import { cn } from '@/lib/cn';
 
 const NAV_LINKS = [
-  { label: 'Home', href: '#home' },
-  { label: 'About', href: '#about' },
-  { label: 'Vision', href: '#vision' },
-  { label: 'Benefits', href: '#benefits' },
+  { label: 'Home', to: '/' },
+  { label: 'About', to: '/about' },
+  { label: 'Vision', to: '/vision' },
+  { label: 'Benefits', to: '/benefits' },
 ];
 
 export function PublicHeader() {
@@ -18,9 +19,16 @@ export function PublicHeader() {
         </Link>
         <nav className="hidden items-center gap-6 md:flex">
           {NAV_LINKS.map((link) => (
-            <a key={link.href} href={link.href} className="text-sm font-medium text-slate-600 hover:text-blue-600">
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={link.to === '/'}
+              className={({ isActive }) =>
+                cn('text-sm font-medium text-slate-600 hover:text-blue-600', isActive && 'text-blue-600')
+              }
+            >
               {link.label}
-            </a>
+            </NavLink>
           ))}
         </nav>
         <div className="flex items-center gap-2">
