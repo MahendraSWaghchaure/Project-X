@@ -39,3 +39,72 @@ jobs:
       - name: Test
         working-directory: backend
         run: mvn -B -pl app -am test
+
+  # Actually builds and boots backend/Dockerfile's image against real Postgres/Redis service
+  # containers - the same packaging DEPLOY.md's Oracle VM path relies on, verified here on every
+  # push instead of assumed correct, since Docker isn't available in every dev environment this
+  # project is worked on in.
+  docker-verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_DB: projectx
+          POSTGRES_USER: projectx
+          POSTGRES_PASSWORD: projectx
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U projectx"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t projectx-app:ci ./backend
+      - name: Generate a throwaway JWT keypair
+        run: |
+          mkdir -p /tmp/jwt
+          openssl genrsa -out /tmp/jwt/private.pem 2048
+          openssl rsa -in /tmp/jwt/private.pem -pubout -out /tmp/jwt/public.pem
+      - name: Boot the image and hit /actuator/health
+        run: |
+          docker run -d --name projectx-app --network host \
+            -e SPRING_PROFILES_ACTIVE=prod \
+            -e DB_URL=jdbc:postgresql://localhost:5432/projectx \
+            -e DB_USERNAME=projectx \
+            -e DB_PASSWORD=projectx \
+            -e REDIS_HOST=localhost \
+            -e REDIS_PORT=6379 \
+            -e JWT_PRIVATE_KEY_LOCATION=file:/run/secrets/jwt-private.pem \
+            -e JWT_PUBLIC_KEY_LOCATION=file:/run/secrets/jwt-public.pem \
+            -e CORS_ALLOWED_ORIGINS=http://localhost:5173 \
+            -e TRACKING_INGEST_SECRET=ci-test-secret \
+            -e PLATFORM_ADMIN_PASSWORD=ci-test-password \
+            -v /tmp/jwt/private.pem:/run/secrets/jwt-private.pem:ro \
+            -v /tmp/jwt/public.pem:/run/secrets/jwt-public.pem:ro \
+            projectx-app:ci
+
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8080/actuator/health | grep -q '"status":"UP"'; then
+              echo "Backend image is up and healthy"
+              exit 0
+            fi
+            sleep 3
+          done
+
+          echo "Backend image never became healthy - dumping logs"
+          docker logs projectx-app
+          exit 1
+      - name: Container logs (always, for debugging)
+        if: always()
+        run: docker logs projectx-app || true
