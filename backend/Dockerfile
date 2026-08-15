@@ -6,9 +6,11 @@ WORKDIR /workspace
 
 # Maven isn't preinstalled on the temurin base images - pull the same binary distribution used
 # for local development instead of relying on whatever version a package manager happens to carry.
-ARG MAVEN_VERSION=3.9.9
+# archive.apache.org (not dlcdn.apache.org, which only mirrors the last couple of releases and
+# 404s on anything older - caught in CI when 3.9.9 aged out of it) keeps every release forever.
+ARG MAVEN_VERSION=3.9.16
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
-    && curl -fsSL "https://dlcdn.apache.org/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz" \
+    && curl -fsSL "https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz" \
        -o /tmp/maven.tar.gz \
     && tar -xzf /tmp/maven.tar.gz -C /opt \
     && ln -s "/opt/apache-maven-${MAVEN_VERSION}/bin/mvn" /usr/local/bin/mvn \
