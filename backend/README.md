@@ -4,12 +4,17 @@ Modular-monolith Spring Boot 4 / Java 25 application. One deployable JAR (module
 module boundaries enforced by Maven module dependencies (see root `pom.xml`'s `<modules>` and each
 module's own `pom.xml`).
 
+The frontend (React 19 + TypeScript + Vite) lives in its own repo -
+[Project-X-UI](https://github.com/MahendraSWaghchaure/Project-X-UI) - so each side builds, tests,
+and deploys independently. Point it at this backend via `VITE_API_BASE_URL`/`VITE_WS_BASE_URL`
+(see that repo's README).
+
 ## What you need installed
 
 - **JDK 25** (LTS) to build and run the app itself. Check with `java -version`.
 - **A JDK Gradle actually supports, only if you're building the Android app** — Gradle doesn't yet
   support JDK 25's class file version ("Unsupported class file major version 69"). Use JDK 17 or 21
-  for that specific build; see `frontend/MOBILE.md`.
+  for that specific build; see the frontend repo's `MOBILE.md`.
 - **Maven 3.9+** — or open this folder in IntelliJ IDEA / VS Code (Java extension pack) / Eclipse,
   all of which bundle Maven and can run/debug `app`'s `ProjectXApplication` directly.
 - **Postgres 16+ with PostGIS, and Redis** — either via `docker compose up -d postgres redis` from

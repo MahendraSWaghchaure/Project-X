@@ -3,17 +3,8 @@ target/
 *.class
 *.jar
 !.mvn/wrapper/maven-wrapper.jar
-!frontend/android/gradle/wrapper/gradle-wrapper.jar
 *.log
 .mvn/timing.properties
-
-# --- Node / Frontend ---
-node_modules/
-dist/
-dist-ssr/
-frontend/coverage/
-*.local
-*.tsbuildinfo
 
 # --- Environment / secrets ---
 .env

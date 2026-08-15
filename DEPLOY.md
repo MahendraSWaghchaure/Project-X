@@ -136,9 +136,12 @@ If that hangs or refuses: recheck Part 1's firewall rules first (the most common
 
 ## Part 7 — Deploy the frontend
 
-On [vercel.com](https://vercel.com): **New Project → import this repo**.
+The frontend lives in its own repo -
+[Project-X-UI](https://github.com/MahendraSWaghchaure/Project-X-UI) - not this one.
 
-- **Root Directory**: `frontend`
+On [vercel.com](https://vercel.com): **New Project → import the `Project-X-UI` repo**.
+
+- **Root Directory**: `.` (it's the repo root there, not a `frontend/` subfolder)
 - **Framework Preset**: Vite (auto-detected)
 - **Environment Variables**:
   - `VITE_API_BASE_URL` = `https://<your-domain>` (the bare origin from Part 2 - **no** `/api`
@@ -154,8 +157,8 @@ Vercel too), then:
 docker compose -f docker-compose.prod.yml up -d   # picks up the new CORS_ALLOWED_ORIGINS
 ```
 
-`frontend/vercel.json` (Vercel) and `frontend/public/_redirects` (Cloudflare Pages/Netlify) are
-already in the repo so client-side routes like `/parent/dashboard` don't 404 on a hard refresh -
+`Project-X-UI`'s `vercel.json` (Vercel) and `public/_redirects` (Cloudflare Pages/Netlify) are
+already in that repo so client-side routes like `/parent/dashboard` don't 404 on a hard refresh -
 nothing extra to configure there.
 
 ## Part 8 — First login

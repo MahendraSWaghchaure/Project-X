@@ -8,16 +8,18 @@ drivers, school admins, and us as the platform operator) plus the schools they b
 a responsive web app and, via Capacitor, a real Android app (an iOS build needs a Mac).
 
 This was a solo-built prototype for a year (Spring Boot 2.7, no real domain model, placeholder
-frontend pages). It's since been rebuilt from the ground up and run/verified end-to-end on this
-machine: **Java 25 + Spring Boot 4 + Spring Security 7** on the backend, **React 19 + TypeScript +
-Vite** on the frontend. See `backend/README.md` and `frontend/README.md` for the details of each
-side, and `frontend/MOBILE.md` for the Android/iOS build.
+frontend pages). It's since been rebuilt from the ground up and run/verified end-to-end:
+**Java 25 + Spring Boot 4 + Spring Security 7** on the backend, **React 19 + TypeScript + Vite**
+on the frontend.
+
+**This repo is the backend.** The frontend is a separate repo -
+[Project-X-UI](https://github.com/MahendraSWaghchaure/Project-X-UI) - so each side builds, tests,
+and deploys independently; see its README (and `MOBILE.md` there for the Android/iOS build).
 
 ## Repo layout
 
 ```
 backend/     Multi-module Maven project - see backend/README.md for the module map
-frontend/    React + TS + Vite (+ android/, ios/ Capacitor projects) - see frontend/README.md
 docker-compose.yml   Postgres+PostGIS, Redis, Traccar - one option for local infra (see below)
 docker-compose.prod.yml, backend/Dockerfile, deploy/, DEPLOY.md   Free-tier production deployment
 ```
@@ -32,10 +34,11 @@ see `backend/README.md` for exact portable-install steps if you're in the same b
 docker compose up -d postgres redis      # or install Postgres 16+/PostGIS + Redis natively
 
 cd backend && mvn -pl app -am spring-boot:run   # http://localhost:8080, Swagger at /swagger-ui.html
-
-# separate terminal
-cd frontend && npm install && npm run dev        # http://localhost:5173
 ```
+
+Then, in a sibling directory, clone
+[Project-X-UI](https://github.com/MahendraSWaghchaure/Project-X-UI) and `npm install && npm run
+dev` there for the frontend on http://localhost:5173.
 
 Log in as the seeded platform admin (`admin@projectx.local` / `changeme123` by default — see
 `backend/README.md` for how to override and why you must before this goes anywhere near a shared
