@@ -1,0 +1,7 @@
+**/target/
+**/*.class
+.mvn/
+.idea/
+.vscode/
+*.iml
+.git/

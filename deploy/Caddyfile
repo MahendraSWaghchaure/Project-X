@@ -1,0 +1,7 @@
+# Caddy gets automatic HTTPS (Let's Encrypt, auto-renewed) for free as long as {$DOMAIN} is a
+# real hostname that resolves to this VM - a bought domain, a subdomain you point at it, or a
+# free sslip.io/nip.io hostname (see DEPLOY.md). WebSocket upgrade (the live-tracking STOMP
+# connection) is proxied automatically - reverse_proxy doesn't need anything extra for that.
+{$DOMAIN} {
+    reverse_proxy app:8080
+}

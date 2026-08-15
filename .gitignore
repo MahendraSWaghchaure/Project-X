@@ -19,6 +19,7 @@ frontend/coverage/
 .env
 .env.*
 !.env.example
+!.env.prod.example
 **/application-local.yml
 **/application-local.yaml
 *.pem

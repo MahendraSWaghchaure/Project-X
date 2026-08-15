@@ -19,6 +19,7 @@ side, and `frontend/MOBILE.md` for the Android/iOS build.
 backend/     Multi-module Maven project - see backend/README.md for the module map
 frontend/    React + TS + Vite (+ android/, ios/ Capacitor projects) - see frontend/README.md
 docker-compose.yml   Postgres+PostGIS, Redis, Traccar - one option for local infra (see below)
+docker-compose.prod.yml, backend/Dockerfile, deploy/, DEPLOY.md   Free-tier production deployment
 ```
 
 ## Quick start
@@ -39,6 +40,12 @@ cd frontend && npm install && npm run dev        # http://localhost:5173
 Log in as the seeded platform admin (`admin@projectx.local` / `changeme123` by default — see
 `backend/README.md` for how to override and why you must before this goes anywhere near a shared
 environment) to onboard your first school.
+
+## Deploying it for real
+
+See **`DEPLOY.md`** — a free-forever setup (Oracle Cloud's Always Free VM for the backend,
+Postgres+PostGIS, and Redis via Docker Compose; Vercel/Cloudflare Pages for the static frontend),
+not a 12-month trial that starts billing later.
 
 ## What's built
 
