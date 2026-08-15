@@ -53,7 +53,9 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
-RUN useradd --system --uid 1000 --create-home projectx
+# No fixed --uid: eclipse-temurin's base image already claims 1000 for its own default user,
+# and useradd fails outright on a collision rather than picking the next free one itself.
+RUN useradd --system --create-home projectx
 COPY --from=build /workspace/app.jar app.jar
 RUN chown projectx:projectx app.jar
 USER projectx
