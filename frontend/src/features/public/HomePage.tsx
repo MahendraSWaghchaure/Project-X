@@ -8,7 +8,6 @@ import { ParentIcon, ChildIcon, SchoolIcon, DriverIcon } from '@/components/illu
 // Real photos, not stock illustrations - a mix of Pexels (free license, no attribution
 // required) and Wikimedia Commons (CC BY-SA, attribution required) - courtesy credit for all
 // of them is in the footer anyway, see PublicFooter.
-const HERO_BUS_PHOTO_URL = 'https://images.pexels.com/photos/30473509/pexels-photo-30473509.jpeg?auto=compress&cs=tinysrgb&w=900';
 const CHILDREN_PHOTO_URL = 'https://images.pexels.com/photos/5909898/pexels-photo-5909898.jpeg?auto=compress&cs=tinysrgb&w=500';
 
 interface FleetPhoto {
@@ -17,16 +16,11 @@ interface FleetPhoto {
   caption: string;
 }
 
-// Real, currently-in-service school buses, photographed in four different Indian cities - not
+// Real, currently-in-service school buses, photographed in three different Indian cities - not
 // one hero shot pretending to represent the whole country. Every bus here already shows the
 // kind of safety signage (STOP arm, "SCHOOL BUS", school name + phone number on the body) this
 // product's insurance and verified-driver features back up.
 const FLEET_PHOTOS: FleetPhoto[] = [
-  {
-    src: 'https://images.pexels.com/photos/30473509/pexels-photo-30473509.jpeg?auto=compress&cs=tinysrgb&w=700',
-    alt: 'A yellow school bus on a residential street in Chandigarh',
-    caption: 'Chandigarh',
-  },
   {
     src: 'https://images.pexels.com/photos/28203486/pexels-photo-28203486.jpeg?auto=compress&cs=tinysrgb&w=700',
     alt: 'A fleet of yellow school buses with STOP-arm signage in Talegaon Dabhade, Maharashtra',
@@ -98,8 +92,16 @@ export function HomePage() {
 
       <main className="flex-1">
         {/* Hero */}
-        <section id="home" className="bg-gradient-to-b from-blue-50 to-white px-4 py-16 sm:px-6 sm:py-20">
-          <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
+        <section id="home" className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white px-4 py-16 sm:px-6 sm:py-20">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-24 right-0 h-96 w-96 rounded-full bg-blue-200/40 blur-3xl"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute bottom-0 left-0 h-72 w-72 rounded-full bg-amber-200/30 blur-3xl"
+          />
+          <div className="relative mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2">
             <div className="text-center md:text-left">
               <h1 className="mx-auto max-w-xl text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl md:mx-0">
                 Privately-run school transport, <span className="text-blue-600">finally accountable</span>
@@ -118,13 +120,67 @@ export function HomePage() {
                   </Button>
                 </Link>
               </div>
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 md:justify-start">
+                {['Live GPS tracking', 'Verified drivers', 'Insurance covered', 'Instant alerts'].map((label) => (
+                  <span key={label} className="flex items-center gap-1.5 text-sm font-medium text-slate-500">
+                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 text-blue-500">
+                      <path
+                        fillRule="evenodd"
+                        d="M16.704 5.29a1 1 0 0 1 0 1.415l-7.5 7.5a1 1 0 0 1-1.415 0l-3.5-3.5a1 1 0 1 1 1.415-1.414L8.5 12.086l6.79-6.796a1 1 0 0 1 1.414 0Z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    {label}
+                  </span>
+                ))}
+              </div>
             </div>
-            <img
-              src={HERO_BUS_PHOTO_URL}
-              alt="A yellow school bus on a residential street in Chandigarh, India"
-              className="mx-auto w-full max-w-md rounded-2xl object-cover shadow-lg"
-              loading="eager"
-            />
+
+            {/* Live-tracking mockup - visualizes what the product actually does rather than a
+                generic street photo standing in for it. */}
+            <div className="relative mx-auto w-full max-w-md">
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+                <div className="relative h-64 bg-gradient-to-br from-blue-50 via-slate-50 to-amber-50">
+                  <svg viewBox="0 0 400 260" className="absolute inset-0 h-full w-full" aria-hidden>
+                    <path d="M-20 210 C 100 160, 180 250, 300 180 S 420 60, 460 90" stroke="#cbd5e1" strokeWidth="10" fill="none" />
+                    <path
+                      d="M-20 210 C 100 160, 180 250, 300 180 S 420 60, 460 90"
+                      stroke="#f8fafc"
+                      strokeWidth="2"
+                      strokeDasharray="8 8"
+                      fill="none"
+                    />
+                  </svg>
+                  <div className="absolute left-4 top-4 max-w-[13rem] rounded-lg bg-white/95 px-3 py-2 shadow-md">
+                    <p className="text-xs font-semibold text-slate-900">Route 12 &middot; MH-14-LL-2747</p>
+                    <p className="text-xs font-medium text-blue-600">Arriving in 4 min</p>
+                  </div>
+                  <div className="absolute left-[58%] top-[42%] -translate-x-1/2 -translate-y-1/2">
+                    <span className="absolute inline-flex h-9 w-9 animate-ping rounded-full bg-blue-400 opacity-60" />
+                    <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg">
+                      <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
+                        <path d="M3 6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7a1 1 0 0 1-1 1h-1a2 2 0 1 1-4 0H9a2 2 0 1 1-4 0H4a1 1 0 0 1-1-1V6Zm2 6.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0Zm8 0a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0ZM5 5.5v3h10v-3H5Z" />
+                      </svg>
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 border-t border-slate-100 px-4 py-3">
+                  <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600">
+                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
+                      <path
+                        fillRule="evenodd"
+                        d="M16.704 5.29a1 1 0 0 1 0 1.415l-7.5 7.5a1 1 0 0 1-1.415 0l-3.5-3.5a1 1 0 1 1 1.415-1.414L8.5 12.086l6.79-6.796a1 1 0 0 1 1.414 0Z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">Aarav confirmed home safely</p>
+                    <p className="text-xs text-slate-400">3:45 PM &middot; by parent</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 

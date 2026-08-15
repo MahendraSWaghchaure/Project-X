@@ -36,10 +36,6 @@ export function PublicFooter() {
       </div>
       <div className="border-t border-slate-800 px-4 py-3 text-center text-xs text-slate-500 sm:px-6">
         Photos courtesy of{' '}
-        <a href="https://www.pexels.com/photo/yellow-school-bus-on-chandigarh-street-30473509/" target="_blank" rel="noreferrer" className="underline hover:text-white">
-          Rajeev Negi
-        </a>
-        ,{' '}
         <a href="https://www.pexels.com/photo/group-of-local-schoolgirls-near-rickshaw-5909898/" target="_blank" rel="noreferrer" className="underline hover:text-white">
           Plato Terentev
         </a>{' '}
