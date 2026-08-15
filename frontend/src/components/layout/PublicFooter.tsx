@@ -36,24 +36,26 @@ export function PublicFooter() {
       </div>
       <div className="border-t border-slate-800 px-4 py-3 text-center text-xs text-slate-500 sm:px-6">
         Photos courtesy of{' '}
-        <a
-          href="https://www.pexels.com/photo/yellow-school-bus-on-chandigarh-street-30473509/"
-          target="_blank"
-          rel="noreferrer"
-          className="underline hover:text-white"
-        >
+        <a href="https://www.pexels.com/photo/yellow-school-bus-on-chandigarh-street-30473509/" target="_blank" rel="noreferrer" className="underline hover:text-white">
           Rajeev Negi
-        </a>{' '}
-        and{' '}
-        <a
-          href="https://www.pexels.com/photo/group-of-local-schoolgirls-near-rickshaw-5909898/"
-          target="_blank"
-          rel="noreferrer"
-          className="underline hover:text-white"
-        >
+        </a>
+        ,{' '}
+        <a href="https://www.pexels.com/photo/group-of-local-schoolgirls-near-rickshaw-5909898/" target="_blank" rel="noreferrer" className="underline hover:text-white">
           Plato Terentev
         </a>{' '}
-        via Pexels.
+        and{' '}
+        <a href="https://www.pexels.com/photo/school-bus-of-indian-schools-the-travel-soul-sandeep-kr-singh-28203486/" target="_blank" rel="noreferrer" className="underline hover:text-white">
+          Sandeep Singh
+        </a>{' '}
+        via Pexels; &ldquo;School bus, Indore&rdquo; by Bernard Gagnon (
+        <a href="https://commons.wikimedia.org/wiki/File:School_bus,_Indore.jpg" target="_blank" rel="noreferrer" className="underline hover:text-white">
+          CC BY-SA 3.0
+        </a>
+        ) and &ldquo;School bus kerala&rdquo; by Pulari Studio Padapparamba (
+        <a href="https://commons.wikimedia.org/wiki/File:School_bus_kerala.JPG" target="_blank" rel="noreferrer" className="underline hover:text-white">
+          CC BY-SA 4.0
+        </a>
+        ) via Wikimedia Commons.
       </div>
       <div className="border-t border-slate-800 px-4 py-4 text-center text-xs text-slate-500 sm:px-6">
         &copy; {new Date().getFullYear()} Sunju School Bus Service. All rights reserved.

@@ -5,10 +5,44 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardBody } from '@/components/ui/Card';
 import { ParentIcon, ChildIcon, SchoolIcon, DriverIcon } from '@/components/illustrations/RoleIcons';
 
-// Real photos, not stock illustrations - both from Pexels (free license, no attribution
-// required, courtesy credit given in the footer anyway - see PublicFooter).
+// Real photos, not stock illustrations - a mix of Pexels (free license, no attribution
+// required) and Wikimedia Commons (CC BY-SA, attribution required) - courtesy credit for all
+// of them is in the footer anyway, see PublicFooter.
 const HERO_BUS_PHOTO_URL = 'https://images.pexels.com/photos/30473509/pexels-photo-30473509.jpeg?auto=compress&cs=tinysrgb&w=900';
 const CHILDREN_PHOTO_URL = 'https://images.pexels.com/photos/5909898/pexels-photo-5909898.jpeg?auto=compress&cs=tinysrgb&w=500';
+
+interface FleetPhoto {
+  src: string;
+  alt: string;
+  caption: string;
+}
+
+// Real, currently-in-service school buses, photographed in four different Indian cities - not
+// one hero shot pretending to represent the whole country. Every bus here already shows the
+// kind of safety signage (STOP arm, "SCHOOL BUS", school name + phone number on the body) this
+// product's insurance and verified-driver features back up.
+const FLEET_PHOTOS: FleetPhoto[] = [
+  {
+    src: 'https://images.pexels.com/photos/30473509/pexels-photo-30473509.jpeg?auto=compress&cs=tinysrgb&w=700',
+    alt: 'A yellow school bus on a residential street in Chandigarh',
+    caption: 'Chandigarh',
+  },
+  {
+    src: 'https://images.pexels.com/photos/28203486/pexels-photo-28203486.jpeg?auto=compress&cs=tinysrgb&w=700',
+    alt: 'A fleet of yellow school buses with STOP-arm signage in Talegaon Dabhade, Maharashtra',
+    caption: 'Talegaon, Maharashtra',
+  },
+  {
+    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/School_bus%2C_Indore.jpg/960px-School_bus%2C_Indore.jpg',
+    alt: 'A school bus with the school name and phone number printed on the side, Indore',
+    caption: 'Indore, Madhya Pradesh',
+  },
+  {
+    src: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/School_bus_kerala.JPG/960px-School_bus_kerala.JPG',
+    alt: 'A government school bus with a STOP sign on the door, Kerala',
+    caption: 'Kerala',
+  },
+];
 
 const BENEFITS = [
   {
@@ -91,6 +125,26 @@ export function HomePage() {
               className="mx-auto w-full max-w-md rounded-2xl object-cover shadow-lg"
               loading="eager"
             />
+          </div>
+        </section>
+
+        {/* Fleet - auto-scrolling strip of real, currently-in-service buses from different cities */}
+        <section aria-label="Our fleet, across India" className="overflow-hidden border-y border-slate-100 bg-white py-10">
+          <p className="mb-6 text-center text-sm font-semibold uppercase tracking-wide text-slate-400">
+            Real buses, real safety signage &mdash; every city we run in
+          </p>
+          <div className="group flex w-max animate-marquee">
+            {[...FLEET_PHOTOS, ...FLEET_PHOTOS].map((photo, i) => (
+              <figure key={`${photo.caption}-${i}`} className="mx-3 w-72 flex-shrink-0">
+                <img
+                  src={photo.src}
+                  alt={photo.alt}
+                  className="h-48 w-72 rounded-xl object-cover shadow-md"
+                  loading={i < FLEET_PHOTOS.length ? 'eager' : 'lazy'}
+                />
+                <figcaption className="mt-2 text-center text-sm font-medium text-slate-500">{photo.caption}</figcaption>
+              </figure>
+            ))}
           </div>
         </section>
 
