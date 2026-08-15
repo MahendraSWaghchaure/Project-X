@@ -35,25 +35,25 @@ export function PublicFooter() {
         </div>
       </div>
       <div className="border-t border-slate-800 px-4 py-3 text-center text-xs text-slate-500 sm:px-6">
-        Photo credits: &ldquo;Tempo Matador school bus, Pune&rdquo; by shankar s., cropped by Mr.choppers (
+        Photos courtesy of{' '}
         <a
-          href="https://commons.wikimedia.org/wiki/File:Tempo_Matador_school_bus,_Pune.jpg"
+          href="https://www.pexels.com/photo/yellow-school-bus-on-chandigarh-street-30473509/"
           target="_blank"
           rel="noreferrer"
           className="underline hover:text-white"
         >
-          CC BY 2.0
-        </a>
-        ); &ldquo;Indian school boys and girl&rdquo; by Seriousprof (
+          Rajeev Negi
+        </a>{' '}
+        and{' '}
         <a
-          href="https://commons.wikimedia.org/wiki/File:Indian_school_boys_and_girl.jpg"
+          href="https://www.pexels.com/photo/group-of-local-schoolgirls-near-rickshaw-5909898/"
           target="_blank"
           rel="noreferrer"
           className="underline hover:text-white"
         >
-          CC BY-SA 4.0
-        </a>
-        ), via Wikimedia Commons.
+          Plato Terentev
+        </a>{' '}
+        via Pexels.
       </div>
       <div className="border-t border-slate-800 px-4 py-4 text-center text-xs text-slate-500 sm:px-6">
         &copy; {new Date().getFullYear()} Sunju School Bus Service. All rights reserved.

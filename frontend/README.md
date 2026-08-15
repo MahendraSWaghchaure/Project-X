@@ -5,9 +5,10 @@ react-leaflet (incl. a click-to-drop-a-pin location picker), STOMP-over-SockJS f
 tracking and live grievance-status push, Razorpay Checkout (loaded from their CDN, not an npm
 package) for payments. Also ships as an Android app via Capacitor - see `MOBILE.md`.
 
-The public marketing pages use real photos (sourced from Wikimedia Commons under CC BY / CC BY-SA,
-credited in the footer) rather than stock imagery of unrelated people; nothing inside the
-authenticated product claims to show a photo of an actual enrolled child, driver, or vehicle.
+The public marketing pages use real photos (sourced from Pexels, free license, courtesy-credited
+in the footer) of an actual Indian school bus and schoolchildren, rather than generic stock
+imagery; nothing inside the authenticated product claims to show a photo of an actual enrolled
+child, driver, or vehicle.
 
 ## Setup
 

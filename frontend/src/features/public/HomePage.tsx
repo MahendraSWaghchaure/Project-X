@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardBody } from '@/components/ui/Card';
 import { ParentIcon, ChildIcon, SchoolIcon, DriverIcon } from '@/components/illustrations/RoleIcons';
 
-// Real photos, not stock illustrations - both from Wikimedia Commons, freely licensed with
-// attribution given in the footer (see PublicFooter's "Photo credits" line).
-const HERO_BUS_PHOTO_URL = 'https://upload.wikimedia.org/wikipedia/commons/4/4f/Tempo_Matador_school_bus%2C_Pune.jpg';
-const CHILDREN_PHOTO_URL = 'https://upload.wikimedia.org/wikipedia/commons/1/13/Indian_school_boys_and_girl.jpg';
+// Real photos, not stock illustrations - both from Pexels (free license, no attribution
+// required, courtesy credit given in the footer anyway - see PublicFooter).
+const HERO_BUS_PHOTO_URL = 'https://images.pexels.com/photos/30473509/pexels-photo-30473509.jpeg?auto=compress&cs=tinysrgb&w=900';
+const CHILDREN_PHOTO_URL = 'https://images.pexels.com/photos/5909898/pexels-photo-5909898.jpeg?auto=compress&cs=tinysrgb&w=500';
 
 const BENEFITS = [
   {
@@ -87,7 +87,7 @@ export function HomePage() {
             </div>
             <img
               src={HERO_BUS_PHOTO_URL}
-              alt="A privately-run school bus in Pune, India"
+              alt="A yellow school bus on a residential street in Chandigarh, India"
               className="mx-auto w-full max-w-md rounded-2xl object-cover shadow-lg"
               loading="eager"
             />
@@ -110,7 +110,7 @@ export function HomePage() {
             <div className="flex flex-col items-center gap-6">
               <img
                 src={CHILDREN_PHOTO_URL}
-                alt="Schoolchildren in India"
+                alt="Schoolgirls in uniform walking near Hampi, India"
                 className="h-56 w-56 rounded-full object-cover shadow-lg"
                 loading="lazy"
               />
