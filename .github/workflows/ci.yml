@@ -76,6 +76,9 @@ jobs:
           mkdir -p /tmp/jwt
           openssl genrsa -out /tmp/jwt/private.pem 2048
           openssl rsa -in /tmp/jwt/private.pem -pubout -out /tmp/jwt/public.pem
+          # The container runs as an unprivileged user - see DEPLOY.md's matching chmod, this
+          # mirrors it so CI actually exercises the real documented setup, not an easier one.
+          chmod 644 /tmp/jwt/private.pem /tmp/jwt/public.pem
       - name: Boot the image and hit /actuator/health
         run: |
           docker run -d --name projectx-app --network host \

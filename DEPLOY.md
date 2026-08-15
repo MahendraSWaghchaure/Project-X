@@ -104,6 +104,10 @@ cd Project-X
 mkdir -p ~/secrets
 openssl genrsa -out ~/secrets/jwt-private.pem 2048
 openssl rsa -in ~/secrets/jwt-private.pem -pubout -out ~/secrets/jwt-public.pem
+# The app container runs as an unprivileged user, not root or your VM login - without this it
+# can't read the bind-mounted key files and fails at startup with a confusing
+# "FileNotFoundException ... (Permission denied)" on a file that's clearly right there.
+chmod 644 ~/secrets/jwt-private.pem ~/secrets/jwt-public.pem
 
 cp .env.prod.example .env
 nano .env   # fill in DOMAIN, DB_PASSWORD, JWT_*_KEY_PATH (point at ~/secrets/...),
