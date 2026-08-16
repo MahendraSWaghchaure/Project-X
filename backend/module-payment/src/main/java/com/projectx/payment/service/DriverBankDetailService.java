@@ -1,5 +1,6 @@
 package com.projectx.payment.service;
 
+import com.projectx.common.exception.ConflictException;
 import com.projectx.common.exception.ForbiddenOperationException;
 import com.projectx.common.exception.ResourceNotFoundException;
 import com.projectx.common.security.CurrentUser;
@@ -27,6 +28,9 @@ public class DriverBankDetailService {
 
     public BankDetailResponse upsertMine(UpsertBankDetailsRequest request) {
         DriverProfile driver = currentDriver();
+        if (bankDetailRepository.existsByAccountNumberAndDriverIdNot(request.accountNumber(), driver.getId())) {
+            throw new ConflictException("This account number is already on file for another driver");
+        }
         DriverBankDetail detail = bankDetailRepository.findByDriverId(driver.getId())
                 .map(existing -> {
                     existing.updateDetails(request.accountHolderName(), request.accountNumber(), request.ifscCode());

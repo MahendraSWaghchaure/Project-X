@@ -8,6 +8,7 @@ public class RateLimitProperties {
     private int loginPerMinute = 20;
     private int refreshPerMinute = 30;
     private int driverRegisterPerMinute = 5;
+    private int forgotPasswordPerMinute = 5;
 
     public int getLoginPerMinute() {
         return loginPerMinute;
@@ -31,5 +32,13 @@ public class RateLimitProperties {
 
     public void setDriverRegisterPerMinute(int driverRegisterPerMinute) {
         this.driverRegisterPerMinute = driverRegisterPerMinute;
+    }
+
+    public int getForgotPasswordPerMinute() {
+        return forgotPasswordPerMinute;
+    }
+
+    public void setForgotPasswordPerMinute(int forgotPasswordPerMinute) {
+        this.forgotPasswordPerMinute = forgotPasswordPerMinute;
     }
 }

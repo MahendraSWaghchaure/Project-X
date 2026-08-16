@@ -61,6 +61,8 @@ public class ChildService {
 
         Child child = new Child(schoolId, parent.getId(), request.firstName(), request.lastName(),
                 request.dateOfBirth(), request.classSection());
+        child.updateMedicalSafetyInfo(request.bloodType(), request.emergencyContactName(),
+                request.emergencyContactPhone(), request.allergies());
         return ChildResponse.from(childRepository.save(child));
     }
 
@@ -69,6 +71,8 @@ public class ChildService {
         ParentProfile parent = parentService.findByUserIdOrThrow(CurrentUserContext.get().userId());
         Child child = new Child(parent.getInvitedBySchoolId(), parent.getId(), request.firstName(), request.lastName(),
                 request.dateOfBirth(), request.classSection());
+        child.updateMedicalSafetyInfo(request.bloodType(), request.emergencyContactName(),
+                request.emergencyContactPhone(), request.allergies());
         return ChildResponse.from(childRepository.save(child));
     }
 
@@ -145,6 +149,8 @@ public class ChildService {
         CurrentUserContext.requireSchoolAccess(schoolId);
         Child child = findWithinSchool(schoolId, childId);
         child.updateDetails(request.firstName(), request.lastName(), request.dateOfBirth(), request.classSection());
+        child.updateMedicalSafetyInfo(request.bloodType(), request.emergencyContactName(),
+                request.emergencyContactPhone(), request.allergies());
         return ChildResponse.from(child);
     }
 
@@ -155,6 +161,8 @@ public class ChildService {
             throw new ForbiddenOperationException("Not a guardian of this child");
         }
         child.updateDetails(request.firstName(), request.lastName(), request.dateOfBirth(), request.classSection());
+        child.updateMedicalSafetyInfo(request.bloodType(), request.emergencyContactName(),
+                request.emergencyContactPhone(), request.allergies());
         return ChildResponse.from(child);
     }
 

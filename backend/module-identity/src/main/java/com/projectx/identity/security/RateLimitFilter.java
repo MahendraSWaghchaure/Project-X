@@ -38,7 +38,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
         this.limitsPerWindow = Map.of(
                 "/auth/login", properties.getLoginPerMinute(),
                 "/auth/refresh", properties.getRefreshPerMinute(),
-                "/drivers/register", properties.getDriverRegisterPerMinute()
+                "/drivers/register", properties.getDriverRegisterPerMinute(),
+                "/auth/forgot-password", properties.getForgotPasswordPerMinute()
         );
     }
 

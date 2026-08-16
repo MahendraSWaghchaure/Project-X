@@ -33,7 +33,7 @@ class DriverIndependentFlowTest extends IntegrationTestBase {
         String platformToken = platformAdminToken();
         String driverEmail = unique("indriver") + "@test.example";
         var registerRequest = new DriverSelfRegisterRequest("Indie", "Driver", driverEmail, "password123",
-                "9876500000", unique("LIC-"), null, unique("REG-"), VehicleType.VAN, 10);
+                "9876500000", unique("LIC-"), null, unique("REG").toUpperCase(), VehicleType.VAN, 10);
 
         ResponseEntity<ApiResponse<DriverResponse>> registerResponse = exchange(
                 "/drivers/register", HttpMethod.POST, registerRequest, null, new ParameterizedTypeReference<>() {});

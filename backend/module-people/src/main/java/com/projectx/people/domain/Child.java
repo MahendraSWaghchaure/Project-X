@@ -51,6 +51,18 @@ public class Child extends Auditable {
     @Column(name = "insurance_policy_id")
     private Long insurancePolicyId;
 
+    @Column(name = "blood_type", length = 8)
+    private String bloodType;
+
+    @Column(name = "emergency_contact_name")
+    private String emergencyContactName;
+
+    @Column(name = "emergency_contact_phone", length = 32)
+    private String emergencyContactPhone;
+
+    @Column(name = "allergies", length = 500)
+    private String allergies;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private ChildStatus status = ChildStatus.ACTIVE;
@@ -109,6 +121,29 @@ public class Child extends Auditable {
         this.lastName = lastName;
         this.dateOfBirth = dateOfBirth;
         this.classSection = classSection;
+    }
+
+    public String getBloodType() {
+        return bloodType;
+    }
+
+    public String getEmergencyContactName() {
+        return emergencyContactName;
+    }
+
+    public String getEmergencyContactPhone() {
+        return emergencyContactPhone;
+    }
+
+    public String getAllergies() {
+        return allergies;
+    }
+
+    public void updateMedicalSafetyInfo(String bloodType, String emergencyContactName, String emergencyContactPhone, String allergies) {
+        this.bloodType = bloodType;
+        this.emergencyContactName = emergencyContactName;
+        this.emergencyContactPhone = emergencyContactPhone;
+        this.allergies = allergies;
     }
 
     public Long getRouteId() {

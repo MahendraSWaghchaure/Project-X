@@ -77,7 +77,7 @@ class ChildAutoAssignRouteTest extends IntegrationTestBase {
                 "/parents/me", HttpMethod.PATCH, completeProfileRequest, parentToken, new ParameterizedTypeReference<>() {});
         assertSuccess(profileResponse);
 
-        var createChildRequest = new CreateChildRequest("Child", "Test", null, "1A", null);
+        var createChildRequest = new CreateChildRequest("Child", "Test", null, "1A", null, null, null, null, null);
         ResponseEntity<ApiResponse<ChildResponse>> childResponse = exchange(
                 "/parents/me/children", HttpMethod.POST, createChildRequest, parentToken, new ParameterizedTypeReference<>() {});
         assertSuccess(childResponse);
