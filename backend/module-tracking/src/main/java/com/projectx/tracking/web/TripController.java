@@ -3,7 +3,9 @@ package com.projectx.tracking.web;
 import com.projectx.common.web.ApiResponse;
 import com.projectx.tracking.domain.TripDirection;
 import com.projectx.tracking.dto.CreateTripRequest;
+import com.projectx.tracking.dto.TripManifestEntry;
 import com.projectx.tracking.dto.TripResponse;
+import com.projectx.tracking.service.TripManifestService;
 import com.projectx.tracking.service.TripService;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
@@ -24,9 +26,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class TripController {
 
     private final TripService tripService;
+    private final TripManifestService tripManifestService;
 
-    public TripController(TripService tripService) {
+    public TripController(TripService tripService, TripManifestService tripManifestService) {
         this.tripService = tripService;
+        this.tripManifestService = tripManifestService;
     }
 
     @PostMapping("/schools/{schoolId}/trips")
@@ -71,6 +75,12 @@ public class TripController {
     @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SCHOOL_ADMIN', 'DRIVER')")
     public ApiResponse<TripResponse> cancelTrip(@PathVariable Long tripId) {
         return ApiResponse.ok(tripService.cancelTrip(tripId));
+    }
+
+    @GetMapping("/trips/{tripId}/manifest")
+    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SCHOOL_ADMIN', 'DRIVER')")
+    public ApiResponse<List<TripManifestEntry>> getManifest(@PathVariable Long tripId) {
+        return ApiResponse.ok(tripManifestService.getManifest(tripId));
     }
 
     @GetMapping("/parents/me/children/{childId}/trips/today")

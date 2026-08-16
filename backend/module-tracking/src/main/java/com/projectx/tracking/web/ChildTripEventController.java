@@ -3,6 +3,7 @@ package com.projectx.tracking.web;
 import com.projectx.common.web.ApiResponse;
 import com.projectx.tracking.dto.ChildTripEventResponse;
 import com.projectx.tracking.dto.RecordChildTripEventRequest;
+import com.projectx.tracking.dto.RecordScannedTripEventRequest;
 import com.projectx.tracking.service.ChildTripEventService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -34,6 +35,14 @@ public class ChildTripEventController {
         return ApiResponse.ok(childTripEventService.recordDriverMarkedEvent(tripId, request.childId(), request.eventType()));
     }
 
+    @PostMapping("/child-events/scan")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SCHOOL_ADMIN', 'DRIVER')")
+    public ApiResponse<ChildTripEventResponse> recordScannedEvent(@PathVariable Long tripId,
+                                                                     @Valid @RequestBody RecordScannedTripEventRequest request) {
+        return ApiResponse.ok(childTripEventService.recordScannedEvent(tripId, request.qrToken(), request.eventType()));
+    }
+
     @PostMapping("/children/{childId}/home-arrival")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('PARENT')")
@@ -46,3 +55,4 @@ public class ChildTripEventController {
         return ApiResponse.ok(childTripEventService.listForTrip(tripId));
     }
 }
+

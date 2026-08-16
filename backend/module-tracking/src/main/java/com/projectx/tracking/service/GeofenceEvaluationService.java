@@ -34,15 +34,17 @@ public class GeofenceEvaluationService {
     private final ChildRepository childRepository;
     private final GeofenceEventRepository geofenceEventRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final GeofenceEventKeySeenFilter keySeenFilter;
 
     public GeofenceEvaluationService(SchoolRepository schoolRepository, RouteStopRepository routeStopRepository,
                                       ChildRepository childRepository, GeofenceEventRepository geofenceEventRepository,
-                                      ApplicationEventPublisher eventPublisher) {
+                                      ApplicationEventPublisher eventPublisher, GeofenceEventKeySeenFilter keySeenFilter) {
         this.schoolRepository = schoolRepository;
         this.routeStopRepository = routeStopRepository;
         this.childRepository = childRepository;
         this.geofenceEventRepository = geofenceEventRepository;
         this.eventPublisher = eventPublisher;
+        this.keySeenFilter = keySeenFilter;
     }
 
     public void evaluate(Trip trip, Point currentLocation) {
@@ -84,14 +86,18 @@ public class GeofenceEvaluationService {
     }
 
     private void raiseSchoolWideOnce(Trip trip, GeofenceEventType type) {
-        if (geofenceEventRepository.existsByTripIdAndTypeAndChildIdIsNull(trip.getId(), type)) {
+        String key = "school:" + trip.getId() + ":" + type;
+        if (!keySeenFilter.definitelyNotSeenBefore(key)
+                && geofenceEventRepository.existsByTripIdAndTypeAndChildIdIsNull(trip.getId(), type)) {
             return;
         }
         persistAndPublish(trip, null, null, type);
     }
 
     private void raisePerChildOnce(Trip trip, Long routeStopId, Long childId, GeofenceEventType type) {
-        if (geofenceEventRepository.existsByTripIdAndTypeAndChildId(trip.getId(), type, childId)) {
+        String key = "child:" + trip.getId() + ":" + type + ":" + childId;
+        if (!keySeenFilter.definitelyNotSeenBefore(key)
+                && geofenceEventRepository.existsByTripIdAndTypeAndChildId(trip.getId(), type, childId)) {
             return;
         }
         persistAndPublish(trip, routeStopId, childId, type);

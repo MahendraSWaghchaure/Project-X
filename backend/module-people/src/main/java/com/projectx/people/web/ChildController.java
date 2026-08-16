@@ -2,8 +2,11 @@ package com.projectx.people.web;
 
 import com.projectx.common.web.ApiResponse;
 import com.projectx.people.dto.AssignChildRouteStopRequest;
+import com.projectx.people.dto.ChildDriverResponse;
 import com.projectx.people.dto.ChildResponse;
 import com.projectx.people.dto.CreateChildRequest;
+import com.projectx.people.dto.InviteParentRequest;
+import com.projectx.people.dto.InviteParentResponse;
 import com.projectx.people.dto.LinkInsurancePolicyRequest;
 import com.projectx.people.dto.UpdateChildRequest;
 import com.projectx.people.service.ChildService;
@@ -62,6 +65,32 @@ public class ChildController {
     @PreAuthorize("hasRole('PARENT')")
     public ApiResponse<List<ChildResponse>> listMyChildren() {
         return ApiResponse.ok(childService.listMyChildren());
+    }
+
+    @GetMapping("/parents/me/children/{childId}/driver")
+    @PreAuthorize("hasRole('PARENT')")
+    public ApiResponse<ChildDriverResponse> getMyChildDriver(@PathVariable Long childId) {
+        return ApiResponse.ok(childService.getMyChildDriver(childId));
+    }
+
+    @GetMapping("/parents/me/children/{childId}/qr-token")
+    @PreAuthorize("hasRole('PARENT')")
+    public ApiResponse<String> getMyChildQrToken(@PathVariable Long childId) {
+        return ApiResponse.ok(childService.getMyChildQrToken(childId));
+    }
+
+    @GetMapping("/schools/{schoolId}/children/{childId}/qr-token")
+    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SCHOOL_ADMIN')")
+    public ApiResponse<String> getChildQrTokenForSchool(@PathVariable Long schoolId, @PathVariable Long childId) {
+        return ApiResponse.ok(childService.getChildQrTokenForSchool(schoolId, childId));
+    }
+
+    @PostMapping("/parents/me/children/{childId}/invite-guardian")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('PARENT')")
+    public ApiResponse<InviteParentResponse> inviteSecondGuardian(@PathVariable Long childId,
+                                                                     @Valid @RequestBody InviteParentRequest request) {
+        return ApiResponse.ok(childService.inviteSecondGuardian(childId, request));
     }
 
     @PutMapping("/schools/{schoolId}/children/{childId}/route-stop")

@@ -61,6 +61,11 @@ management:
       enabled: false
 
 projectx:
+  people:
+    qr:
+      # Signing key for child boarding-QR tokens - see ChildQrTokenService for the ephemeral-default behavior if unset.
+      secret: ${CHILD_QR_SECRET:}
+
   security:
     jwt:
       # Leave unset in local dev - an ephemeral RSA keypair is generated at startup (see
@@ -78,6 +83,11 @@ projectx:
       shared-secret: ${TRACKING_INGEST_SECRET:}
     delay-monitor:
       interval-ms: 120000
+    safety:
+      speed-limit-kmh: ${SAFETY_SPEED_LIMIT_KMH:60}
+      harsh-braking-delta-kmh: ${SAFETY_BRAKING_DELTA_KMH:25}
+      braking-window-seconds: ${SAFETY_BRAKING_WINDOW_SECONDS:15}
+      cooldown-seconds: ${SAFETY_COOLDOWN_SECONDS:300}
 
   notification:
     sms:

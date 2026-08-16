@@ -6,6 +6,7 @@ import com.projectx.people.dto.DriverResponse;
 import com.projectx.people.dto.LinkInsurancePolicyRequest;
 import com.projectx.people.dto.UpdateDriverEmploymentStatusRequest;
 import com.projectx.people.dto.UpdateDriverRequest;
+import com.projectx.people.dto.UpdateDriverVerificationRequest;
 import com.projectx.people.service.DriverService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -48,6 +49,12 @@ public class DriverController {
     public ApiResponse<DriverResponse> updateEmploymentStatus(@PathVariable Long schoolId, @PathVariable Long driverId,
                                                                 @Valid @RequestBody UpdateDriverEmploymentStatusRequest request) {
         return ApiResponse.ok(driverService.updateEmploymentStatus(schoolId, driverId, request.status()));
+    }
+
+    @PatchMapping("/{driverId}/verification")
+    public ApiResponse<DriverResponse> updateVerificationStatus(@PathVariable Long schoolId, @PathVariable Long driverId,
+                                                                   @Valid @RequestBody UpdateDriverVerificationRequest request) {
+        return ApiResponse.ok(driverService.updateVerificationStatus(schoolId, driverId, request.status()));
     }
 
     @PatchMapping("/{driverId}/insurance-policy")

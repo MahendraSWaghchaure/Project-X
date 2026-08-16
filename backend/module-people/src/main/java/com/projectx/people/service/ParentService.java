@@ -39,7 +39,16 @@ public class ParentService {
 
     public InviteParentResponse inviteParent(Long schoolId, InviteParentRequest request) {
         CurrentUserContext.requireSchoolAccess(schoolId);
+        return provisionParentInvite(schoolId, request);
+    }
 
+    /**
+     * Same provisioning as inviteParent, without the school-admin access gate - for callers who've
+     * already done their own authorization (e.g. ChildService.inviteSecondGuardian checks the
+     * caller is a guardian of the specific child, which is the correct check there, not
+     * "is a school admin for this school").
+     */
+    public InviteParentResponse provisionParentInvite(Long schoolId, InviteParentRequest request) {
         UserAccount user = userProvisioningService.provisionInvited(request.email(), request.phone(), Role.PARENT, null);
         ParentProfile profile = parentProfileRepository.save(new ParentProfile(user.getId(), schoolId, null, null));
         String inviteToken = invitationService.issueInvitation(user.getId());

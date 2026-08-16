@@ -10,12 +10,14 @@ import com.projectx.people.domain.Child;
 import com.projectx.people.domain.ParentProfile;
 import com.projectx.people.repo.ChildRepository;
 import com.projectx.people.repo.ParentProfileRepository;
+import com.projectx.people.service.ChildQrTokenService;
 import com.projectx.tracking.domain.ChildTripEvent;
 import com.projectx.tracking.domain.Trip;
 import com.projectx.tracking.dto.ChildTripEventResponse;
 import com.projectx.tracking.repo.ChildTripEventRepository;
 import com.projectx.tracking.repo.TripRepository;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -43,16 +45,19 @@ public class ChildTripEventService {
     private final ParentProfileRepository parentProfileRepository;
     private final TripService tripService;
     private final ApplicationEventPublisher eventPublisher;
+    private final ChildQrTokenService childQrTokenService;
 
     public ChildTripEventService(TripRepository tripRepository, ChildTripEventRepository childTripEventRepository,
                                   ChildRepository childRepository, ParentProfileRepository parentProfileRepository,
-                                  TripService tripService, ApplicationEventPublisher eventPublisher) {
+                                  TripService tripService, ApplicationEventPublisher eventPublisher,
+                                  ChildQrTokenService childQrTokenService) {
         this.tripRepository = tripRepository;
         this.childTripEventRepository = childTripEventRepository;
         this.childRepository = childRepository;
         this.parentProfileRepository = parentProfileRepository;
         this.tripService = tripService;
         this.eventPublisher = eventPublisher;
+        this.childQrTokenService = childQrTokenService;
     }
 
     public ChildTripEventResponse recordDriverMarkedEvent(Long tripId, Long childId, ChildTripEventType type) {
@@ -61,6 +66,12 @@ public class ChildTripEventService {
         }
         Trip trip = tripService.findAndAuthorizeAsDriverOrSchoolAdmin(tripId);
         return record(trip, childId, type, CurrentUserContext.get().userId());
+    }
+
+    /** Same as recordDriverMarkedEvent, but the child is identified by a scanned QR token instead of a manual pick from a list. */
+    public ChildTripEventResponse recordScannedEvent(Long tripId, String qrToken, ChildTripEventType type) {
+        Long childId = childQrTokenService.resolveChildId(qrToken);
+        return recordDriverMarkedEvent(tripId, childId, type);
     }
 
     public ChildTripEventResponse recordParentHomeArrival(Long tripId, Long childId) {
@@ -82,6 +93,22 @@ public class ChildTripEventService {
     @Transactional(readOnly = true)
     public List<ChildTripEventResponse> listForTrip(Long tripId) {
         return childTripEventRepository.findByTripId(tripId).stream().map(ChildTripEventResponse::from).toList();
+    }
+
+    /** Cross-trip attendance history for one child, for the parent-facing calendar view - not just one trip's events. */
+    @Transactional(readOnly = true)
+    public List<ChildTripEventResponse> getAttendanceHistory(Long childId, LocalDate from, LocalDate to) {
+        Long userId = CurrentUserContext.get().userId();
+        ParentProfile parent = parentProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ForbiddenOperationException("No parent profile for current user"));
+        Child child = childRepository.findById(childId).orElseThrow(() -> ResourceNotFoundException.of("Child", childId));
+        if (!child.isGuardian(parent.getId())) {
+            throw new ForbiddenOperationException("Not a guardian of this child");
+        }
+        Instant fromInstant = from.atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
+        Instant toInstant = to.plusDays(1).atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
+        return childTripEventRepository.findByChildIdAndOccurredAtBetweenOrderByOccurredAtDesc(childId, fromInstant, toInstant)
+                .stream().map(ChildTripEventResponse::from).toList();
     }
 
     private ChildTripEventResponse record(Trip trip, Long childId, ChildTripEventType type, Long confirmedByUserId) {

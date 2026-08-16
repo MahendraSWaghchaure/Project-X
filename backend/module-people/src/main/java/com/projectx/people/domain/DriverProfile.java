@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 
 /**
@@ -58,6 +59,16 @@ public class DriverProfile extends Auditable {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private DriverEmploymentStatus employmentStatus = DriverEmploymentStatus.ACTIVE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "verification_status", nullable = false, length = 16)
+    private DriverVerificationStatus verificationStatus = DriverVerificationStatus.PENDING;
+
+    @Column(name = "verified_at")
+    private Instant verifiedAt;
+
+    @Column(name = "verified_by_user_id")
+    private Long verifiedByUserId;
 
     protected DriverProfile() {
     }
@@ -150,5 +161,23 @@ public class DriverProfile extends Auditable {
 
     public boolean isIndependent() {
         return schoolId == null;
+    }
+
+    public DriverVerificationStatus getVerificationStatus() {
+        return verificationStatus;
+    }
+
+    public Instant getVerifiedAt() {
+        return verifiedAt;
+    }
+
+    public Long getVerifiedByUserId() {
+        return verifiedByUserId;
+    }
+
+    public void updateVerification(DriverVerificationStatus status, Long verifiedByUserId) {
+        this.verificationStatus = status;
+        this.verifiedAt = Instant.now();
+        this.verifiedByUserId = verifiedByUserId;
     }
 }

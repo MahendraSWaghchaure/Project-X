@@ -10,12 +10,19 @@ import com.projectx.notification.sender.ChannelNotConfiguredException;
 import com.projectx.notification.sender.EmailSender;
 import com.projectx.notification.sender.PushSender;
 import com.projectx.notification.sender.SmsSender;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** The one place every alert in the system funnels through - every attempt, sent or not, is logged to NotificationRecord. */
+/**
+ * The one place every alert in the system funnels through - every attempt, sent or not, is logged
+ * to NotificationRecord. dispatch() itself is @Async: callers (all AFTER_COMMIT event listeners,
+ * so no live transaction is riding on it) hand off to the notificationExecutor pool and return
+ * immediately, so one slow provider call never blocks the request/event thread that raised it.
+ */
 @Service
 @Transactional
 public class NotificationDispatchService {
@@ -27,17 +34,21 @@ public class NotificationDispatchService {
     private final SmsSender smsSender;
     private final EmailSender emailSender;
     private final PushSender pushSender;
+    private final RetryingChannelDispatcher retryingChannelDispatcher;
 
     public NotificationDispatchService(UserAccountRepository userAccountRepository,
                                         NotificationRecordRepository notificationRecordRepository,
-                                        SmsSender smsSender, EmailSender emailSender, PushSender pushSender) {
+                                        SmsSender smsSender, EmailSender emailSender, PushSender pushSender,
+                                        RetryingChannelDispatcher retryingChannelDispatcher) {
         this.userAccountRepository = userAccountRepository;
         this.notificationRecordRepository = notificationRecordRepository;
         this.smsSender = smsSender;
         this.emailSender = emailSender;
         this.pushSender = pushSender;
+        this.retryingChannelDispatcher = retryingChannelDispatcher;
     }
 
+    @Async("notificationExecutor")
     public void dispatch(Long recipientUserId, String templateKey, String subject, String body) {
         UserAccount user = userAccountRepository.findById(recipientUserId).orElse(null);
         if (user == null) {
@@ -52,18 +63,24 @@ public class NotificationDispatchService {
         attempt(recipientUserId, NotificationChannel.EMAIL, templateKey, body, () -> emailSender.send(user.getEmail(), subject, body));
     }
 
+    /** Notifications every retry attempt failed for - the human-in-the-loop worklist for a real outage, not a transient blip. */
+    @Transactional(readOnly = true)
+    public List<NotificationRecord> listDeadLettered() {
+        return notificationRecordRepository.findByStatus(NotificationStatus.DEAD_LETTERED);
+    }
+
     private void attempt(Long userId, NotificationChannel channel, String templateKey, String body, Runnable action) {
         NotificationStatus status;
         String failureReason = null;
         try {
-            action.run();
+            retryingChannelDispatcher.send(action);
             status = NotificationStatus.SENT;
         } catch (ChannelNotConfiguredException e) {
             status = NotificationStatus.SKIPPED_NOT_CONFIGURED;
             failureReason = e.getMessage();
         } catch (Exception e) {
-            log.error("Notification dispatch failed: user={} channel={}", userId, channel, e);
-            status = NotificationStatus.FAILED;
+            log.error("Notification dispatch exhausted retries: user={} channel={}", userId, channel, e);
+            status = NotificationStatus.DEAD_LETTERED;
             failureReason = e.getMessage();
         }
         notificationRecordRepository.save(new NotificationRecord(userId, channel, templateKey, body, status, failureReason));

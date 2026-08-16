@@ -1,17 +1,23 @@
 package com.projectx.people.service;
 
+import com.projectx.common.exception.ConflictException;
 import com.projectx.common.exception.ForbiddenOperationException;
 import com.projectx.common.exception.ResourceNotFoundException;
 import com.projectx.common.geo.GeoPoints;
 import com.projectx.common.security.CurrentUserContext;
 import com.projectx.people.domain.Child;
 import com.projectx.people.domain.ChildStatus;
+import com.projectx.people.domain.DriverProfile;
 import com.projectx.people.domain.ParentProfile;
 import com.projectx.people.dto.AssignChildRouteStopRequest;
+import com.projectx.people.dto.ChildDriverResponse;
 import com.projectx.people.dto.ChildResponse;
 import com.projectx.people.dto.CreateChildRequest;
+import com.projectx.people.dto.InviteParentRequest;
+import com.projectx.people.dto.InviteParentResponse;
 import com.projectx.people.dto.UpdateChildRequest;
 import com.projectx.people.repo.ChildRepository;
+import com.projectx.people.repo.DriverProfileRepository;
 import com.projectx.people.repo.ParentProfileRepository;
 import com.projectx.school.domain.Route;
 import com.projectx.school.domain.RouteStop;
@@ -35,16 +41,21 @@ public class ChildService {
     private final SchoolRepository schoolRepository;
     private final RouteRepository routeRepository;
     private final RouteStopRepository routeStopRepository;
+    private final DriverProfileRepository driverProfileRepository;
+    private final ChildQrTokenService childQrTokenService;
 
     public ChildService(ChildRepository childRepository, ParentProfileRepository parentProfileRepository,
                          ParentService parentService, SchoolRepository schoolRepository,
-                         RouteRepository routeRepository, RouteStopRepository routeStopRepository) {
+                         RouteRepository routeRepository, RouteStopRepository routeStopRepository,
+                         DriverProfileRepository driverProfileRepository, ChildQrTokenService childQrTokenService) {
         this.childRepository = childRepository;
         this.parentProfileRepository = parentProfileRepository;
         this.parentService = parentService;
         this.schoolRepository = schoolRepository;
         this.routeRepository = routeRepository;
         this.routeStopRepository = routeStopRepository;
+        this.driverProfileRepository = driverProfileRepository;
+        this.childQrTokenService = childQrTokenService;
     }
 
     /** School-admin-driven enrollment: request.primaryParentId() must already be a parent invited by this school. */
@@ -164,6 +175,60 @@ public class ChildService {
         child.updateMedicalSafetyInfo(request.bloodType(), request.emergencyContactName(),
                 request.emergencyContactPhone(), request.allergies());
         return ChildResponse.from(child);
+    }
+
+    /** The trust info (name, phone, verification badge) a parent sees for whoever is driving their child's route today. */
+    @Transactional(readOnly = true)
+    public ChildDriverResponse getMyChildDriver(Long childId) {
+        ParentProfile parent = parentService.findByUserIdOrThrow(CurrentUserContext.get().userId());
+        Child child = childRepository.findById(childId).orElseThrow(() -> ResourceNotFoundException.of("Child", childId));
+        if (!child.isGuardian(parent.getId())) {
+            throw new ForbiddenOperationException("Not a guardian of this child");
+        }
+        if (child.getRouteId() == null) {
+            throw new ResourceNotFoundException("This child has not been assigned a route yet");
+        }
+        Route route = routeRepository.findById(child.getRouteId())
+                .orElseThrow(() -> ResourceNotFoundException.of("Route", child.getRouteId()));
+        if (route.getVehicleId() == null) {
+            throw new ResourceNotFoundException("This child's route has no vehicle assigned yet");
+        }
+        DriverProfile driver = driverProfileRepository.findByVehicleId(route.getVehicleId())
+                .orElseThrow(() -> new ResourceNotFoundException("No driver assigned to this child's vehicle yet"));
+        return ChildDriverResponse.from(driver);
+    }
+
+    /** The stable QR token a parent can display for the driver to scan instead of a manual boarding tap. */
+    @Transactional(readOnly = true)
+    public String getMyChildQrToken(Long childId) {
+        ParentProfile parent = parentService.findByUserIdOrThrow(CurrentUserContext.get().userId());
+        Child child = childRepository.findById(childId).orElseThrow(() -> ResourceNotFoundException.of("Child", childId));
+        if (!child.isGuardian(parent.getId())) {
+            throw new ForbiddenOperationException("Not a guardian of this child");
+        }
+        return childQrTokenService.generateToken(child.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public String getChildQrTokenForSchool(Long schoolId, Long childId) {
+        CurrentUserContext.requireSchoolAccess(schoolId);
+        Child child = findWithinSchool(schoolId, childId);
+        return childQrTokenService.generateToken(child.getId());
+    }
+
+    /** A guardian invites a second guardian for an existing child - reuses the exact same invite/accept machinery as the first parent invite, just attached to secondaryParentId instead of creating a new child. */
+    public InviteParentResponse inviteSecondGuardian(Long childId, InviteParentRequest request) {
+        ParentProfile parent = parentService.findByUserIdOrThrow(CurrentUserContext.get().userId());
+        Child child = childRepository.findById(childId).orElseThrow(() -> ResourceNotFoundException.of("Child", childId));
+        if (!child.isGuardian(parent.getId())) {
+            throw new ForbiddenOperationException("Not a guardian of this child");
+        }
+        if (child.getSecondaryParentId() != null) {
+            throw new ConflictException("This child already has two guardians");
+        }
+        InviteParentResponse response = parentService.provisionParentInvite(child.getSchoolId(), request);
+        child.setSecondaryParentId(response.parentProfileId());
+        return response;
     }
 
     /** "Delete" from the school admin's perspective - marking inactive keeps trip/attendance history intact. */

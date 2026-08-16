@@ -3,6 +3,7 @@ package com.projectx.people.service;
 import com.projectx.common.exception.ConflictException;
 import com.projectx.common.exception.ForbiddenOperationException;
 import com.projectx.common.exception.ResourceNotFoundException;
+import com.projectx.common.security.CurrentUser;
 import com.projectx.common.security.CurrentUserContext;
 import com.projectx.common.security.Role;
 import com.projectx.identity.domain.UserAccount;
@@ -10,6 +11,7 @@ import com.projectx.identity.repo.UserAccountRepository;
 import com.projectx.identity.service.UserProvisioningService;
 import com.projectx.people.domain.DriverEmploymentStatus;
 import com.projectx.people.domain.DriverProfile;
+import com.projectx.people.domain.DriverVerificationStatus;
 import com.projectx.people.dto.CreateDriverRequest;
 import com.projectx.people.dto.DriverResponse;
 import com.projectx.people.dto.DriverSelfRegisterRequest;
@@ -126,6 +128,15 @@ public class DriverService {
         CurrentUserContext.requireSchoolAccess(schoolId);
         DriverProfile driver = findWithinSchool(schoolId, driverId);
         driver.setEmploymentStatus(DriverEmploymentStatus.TERMINATED);
+    }
+
+    /** School admin sets a driver's background-verification status - the badge a parent sees before trusting them with their child. */
+    public DriverResponse updateVerificationStatus(Long schoolId, Long driverId, DriverVerificationStatus status) {
+        CurrentUserContext.requireSchoolAccess(schoolId);
+        DriverProfile driver = findWithinSchool(schoolId, driverId);
+        CurrentUser actor = CurrentUserContext.get();
+        driver.updateVerification(status, actor.userId());
+        return DriverResponse.from(driver);
     }
 
     public DriverResponse linkInsurancePolicy(Long schoolId, Long driverId, Long insurancePolicyId) {
