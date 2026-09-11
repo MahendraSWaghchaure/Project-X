@@ -1,5 +1,6 @@
 package com.projectx.payment.service;
 
+import com.projectx.common.events.AuditEvent;
 import com.projectx.common.exception.ConflictException;
 import com.projectx.common.exception.ForbiddenOperationException;
 import com.projectx.common.exception.ResourceNotFoundException;
@@ -27,6 +28,7 @@ import java.time.Year;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,16 +44,19 @@ public class PaymentService {
     private final ParentProfileRepository parentProfileRepository;
     private final ChildRepository childRepository;
     private final RazorpayOrderService razorpayOrderService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public PaymentService(PaymentRepository paymentRepository, FeeInvoiceRepository feeInvoiceRepository,
                            FeeInvoiceService feeInvoiceService, ParentProfileRepository parentProfileRepository,
-                           ChildRepository childRepository, RazorpayOrderService razorpayOrderService) {
+                           ChildRepository childRepository, RazorpayOrderService razorpayOrderService,
+                           ApplicationEventPublisher eventPublisher) {
         this.paymentRepository = paymentRepository;
         this.feeInvoiceRepository = feeInvoiceRepository;
         this.feeInvoiceService = feeInvoiceService;
         this.parentProfileRepository = parentProfileRepository;
         this.childRepository = childRepository;
         this.razorpayOrderService = razorpayOrderService;
+        this.eventPublisher = eventPublisher;
     }
 
     /** Normal (or catch-up-on-overdue) payment: parent pays specific invoices they already owe, at face value - no advance-pay discount. */
@@ -132,6 +137,8 @@ public class PaymentService {
                 request.razorpayOrderId(), request.razorpayPaymentId(), request.razorpaySignature());
         if (!signatureValid) {
             payment.markFailed();
+            eventPublisher.publishEvent(AuditEvent.of("PAYMENT_VERIFICATION_FAILED", "PAYMENT", payment.getId(),
+                    payment.getSchoolId(), "Signature verification failed for Razorpay order " + request.razorpayOrderId()));
             throw new ForbiddenOperationException("Payment signature verification failed");
         }
 
@@ -142,6 +149,8 @@ public class PaymentService {
         for (Long invoiceId : payment.getCoveredInvoiceIds()) {
             feeInvoiceRepository.findById(invoiceId).ifPresent(invoice -> invoice.markPaid(payment.getId()));
         }
+        eventPublisher.publishEvent(AuditEvent.of("PAYMENT_SUCCEEDED", "PAYMENT", payment.getId(), payment.getSchoolId(),
+                "Payment of " + payment.getAmount() + " verified and marked successful, receipt " + receiptNumber));
         return PaymentResponse.from(payment);
     }
 

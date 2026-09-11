@@ -1,5 +1,6 @@
 package com.projectx.people.service;
 
+import com.projectx.common.events.AuditEvent;
 import com.projectx.common.exception.ConflictException;
 import com.projectx.common.exception.ForbiddenOperationException;
 import com.projectx.common.exception.ResourceNotFoundException;
@@ -28,6 +29,7 @@ import com.projectx.school.repo.SchoolRepository;
 import java.util.Comparator;
 import java.util.List;
 import org.locationtech.jts.geom.Point;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,11 +45,13 @@ public class ChildService {
     private final RouteStopRepository routeStopRepository;
     private final DriverProfileRepository driverProfileRepository;
     private final ChildQrTokenService childQrTokenService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ChildService(ChildRepository childRepository, ParentProfileRepository parentProfileRepository,
                          ParentService parentService, SchoolRepository schoolRepository,
                          RouteRepository routeRepository, RouteStopRepository routeStopRepository,
-                         DriverProfileRepository driverProfileRepository, ChildQrTokenService childQrTokenService) {
+                         DriverProfileRepository driverProfileRepository, ChildQrTokenService childQrTokenService,
+                         ApplicationEventPublisher eventPublisher) {
         this.childRepository = childRepository;
         this.parentProfileRepository = parentProfileRepository;
         this.parentService = parentService;
@@ -56,6 +60,7 @@ public class ChildService {
         this.routeStopRepository = routeStopRepository;
         this.driverProfileRepository = driverProfileRepository;
         this.childQrTokenService = childQrTokenService;
+        this.eventPublisher = eventPublisher;
     }
 
     /** School-admin-driven enrollment: request.primaryParentId() must already be a parent invited by this school. */
@@ -162,6 +167,8 @@ public class ChildService {
         child.updateDetails(request.firstName(), request.lastName(), request.dateOfBirth(), request.classSection());
         child.updateMedicalSafetyInfo(request.bloodType(), request.emergencyContactName(),
                 request.emergencyContactPhone(), request.allergies());
+        eventPublisher.publishEvent(AuditEvent.of("CHILD_MEDICAL_INFO_UPDATED", "CHILD", child.getId(), schoolId,
+                "Medical/safety info updated by school admin"));
         return ChildResponse.from(child);
     }
 
@@ -174,6 +181,8 @@ public class ChildService {
         child.updateDetails(request.firstName(), request.lastName(), request.dateOfBirth(), request.classSection());
         child.updateMedicalSafetyInfo(request.bloodType(), request.emergencyContactName(),
                 request.emergencyContactPhone(), request.allergies());
+        eventPublisher.publishEvent(AuditEvent.of("CHILD_MEDICAL_INFO_UPDATED", "CHILD", child.getId(), child.getSchoolId(),
+                "Medical/safety info updated by parent"));
         return ChildResponse.from(child);
     }
 

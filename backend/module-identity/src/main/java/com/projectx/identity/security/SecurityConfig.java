@@ -54,7 +54,13 @@ public class SecurityConfig {
                         .contentTypeOptions(c -> {})
                         .frameOptions(frame -> frame.deny())
                         .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000))
-                        .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)))
+                        .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                        // This API never returns HTML except swagger-ui/actuator/the default error page,
+                        // but those ARE real attack surface (see the comment above). default-src 'self'
+                        // (not 'none' - swagger-ui needs to load its own same-origin bundled JS/CSS) still
+                        // blocks any third-party script/style injection, framing, and plugin content.
+                        .contentSecurityPolicy(csp -> csp.policyDirectives(
+                                "default-src 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'")))
                 .addFilterAfter(rateLimitFilter, CorsFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
@@ -87,6 +93,8 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        // Explicit 12 rather than BCrypt's implicit default of 10 - roughly 4x the hashing cost,
+        // a reasonable modern floor without being slow enough to hurt login latency.
+        return new BCryptPasswordEncoder(12);
     }
 }

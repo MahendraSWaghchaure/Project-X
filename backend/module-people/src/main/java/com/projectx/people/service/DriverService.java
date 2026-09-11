@@ -1,5 +1,6 @@
 package com.projectx.people.service;
 
+import com.projectx.common.events.AuditEvent;
 import com.projectx.common.exception.ConflictException;
 import com.projectx.common.exception.ForbiddenOperationException;
 import com.projectx.common.exception.ResourceNotFoundException;
@@ -21,6 +22,7 @@ import com.projectx.school.domain.Vehicle;
 import com.projectx.school.repo.VehicleRepository;
 import java.util.List;
 import java.util.Objects;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,13 +34,16 @@ public class DriverService {
     private final VehicleRepository vehicleRepository;
     private final UserAccountRepository userAccountRepository;
     private final UserProvisioningService userProvisioningService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public DriverService(DriverProfileRepository driverProfileRepository, VehicleRepository vehicleRepository,
-                          UserAccountRepository userAccountRepository, UserProvisioningService userProvisioningService) {
+                          UserAccountRepository userAccountRepository, UserProvisioningService userProvisioningService,
+                          ApplicationEventPublisher eventPublisher) {
         this.driverProfileRepository = driverProfileRepository;
         this.vehicleRepository = vehicleRepository;
         this.userAccountRepository = userAccountRepository;
         this.userProvisioningService = userProvisioningService;
+        this.eventPublisher = eventPublisher;
     }
 
     public DriverResponse createDriver(Long schoolId, CreateDriverRequest request) {
@@ -128,6 +133,8 @@ public class DriverService {
         CurrentUserContext.requireSchoolAccess(schoolId);
         DriverProfile driver = findWithinSchool(schoolId, driverId);
         driver.setEmploymentStatus(DriverEmploymentStatus.TERMINATED);
+        eventPublisher.publishEvent(AuditEvent.of("DRIVER_TERMINATED", "DRIVER_PROFILE", driver.getId(), schoolId,
+                driver.getFirstName() + " " + driver.getLastName() + " terminated"));
     }
 
     /** School admin sets a driver's background-verification status - the badge a parent sees before trusting them with their child. */
@@ -136,6 +143,8 @@ public class DriverService {
         DriverProfile driver = findWithinSchool(schoolId, driverId);
         CurrentUser actor = CurrentUserContext.get();
         driver.updateVerification(status, actor.userId());
+        eventPublisher.publishEvent(AuditEvent.of("DRIVER_VERIFICATION_CHANGED", "DRIVER_PROFILE", driver.getId(), schoolId,
+                "Verification status set to " + status));
         return DriverResponse.from(driver);
     }
 

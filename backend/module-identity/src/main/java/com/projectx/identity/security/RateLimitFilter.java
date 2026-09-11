@@ -7,15 +7,31 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Map;
+import java.util.List;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.util.PathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * A crude but effective brute-force/abuse guard on the handful of endpoints reachable with no
- * token at all: login (credential stuffing), refresh, and public driver self-registration (fake
- * account spam). Counters live in Redis (already a dependency for location caching) rather than an
- * in-process map, so the limit holds even if this ever runs as more than one instance.
+ * A crude but effective brute-force/abuse guard, backed by Redis (already a dependency for
+ * location caching) so the limit holds across more than one app instance. Covers both the
+ * endpoints reachable with no token at all (login/refresh/forgot-password/driver self-register -
+ * credential stuffing, fake accounts) and a handful of authenticated business endpoints worth
+ * throttling regardless of who's calling them (SOS trigger, child creation, payment order
+ * creation) - a compromised or scripted account hammering these is still real abuse even though
+ * it's authenticated.
+ *
+ * <p>Patterns are matched with {@link AntPathMatcher} rather than an exact-URI map so
+ * path-variable endpoints (e.g. {@code /trips/{tripId}/sos}) can be covered.
+ *
+ * <p>Keyed by IP, not by authenticated user: this filter runs (see SecurityConfig's
+ * {@code addFilterAfter(rateLimitFilter, CorsFilter.class)}) before the OAuth2 resource-server
+ * filter that actually validates the JWT and populates the SecurityContext, so there is no
+ * authenticated principal available here to key on without re-parsing the token ourselves - not
+ * worth the duplicated, easy-to-get-subtly-wrong logic for a rate limiter whose job is picking a
+ * fair bucket, not authenticating. IP-based still meaningfully throttles a single abusive
+ * client/script regardless of which (or how many) accounts' tokens it cycles through.
  *
  * <p>Deliberately NOT a {@code @Component} - Spring Boot auto-registers any Filter bean as a
  * global servlet filter, which would run this a second time outside SecurityConfig's explicit
@@ -29,36 +45,43 @@ import org.springframework.web.filter.OncePerRequestFilter;
  */
 public class RateLimitFilter extends OncePerRequestFilter {
 
-    private final Map<String, Integer> limitsPerWindow;
+    private record LimitRule(String pattern, int limitPerMinute) {}
+
+    private final List<LimitRule> rules;
     private final Duration window = Duration.ofMinutes(1);
     private final StringRedisTemplate redisTemplate;
+    private final PathMatcher pathMatcher = new AntPathMatcher();
 
     public RateLimitFilter(StringRedisTemplate redisTemplate, RateLimitProperties properties) {
         this.redisTemplate = redisTemplate;
-        this.limitsPerWindow = Map.of(
-                "/auth/login", properties.getLoginPerMinute(),
-                "/auth/refresh", properties.getRefreshPerMinute(),
-                "/drivers/register", properties.getDriverRegisterPerMinute(),
-                "/auth/forgot-password", properties.getForgotPasswordPerMinute()
+        this.rules = List.of(
+                new LimitRule("/auth/login", properties.getLoginPerMinute()),
+                new LimitRule("/auth/refresh", properties.getRefreshPerMinute()),
+                new LimitRule("/drivers/register", properties.getDriverRegisterPerMinute()),
+                new LimitRule("/auth/forgot-password", properties.getForgotPasswordPerMinute()),
+                new LimitRule("/trips/*/sos", properties.getSosTriggerPerMinute()),
+                new LimitRule("/schools/*/children", properties.getChildCreatePerMinute()),
+                new LimitRule("/parents/me/children", properties.getChildCreatePerMinute()),
+                new LimitRule("/parents/me/payments/*orders", properties.getPaymentOrderPerMinute())
         );
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        Integer limit = limitsPerWindow.get(request.getRequestURI());
-        if (limit == null) {
+        LimitRule rule = matchRule(request.getRequestURI());
+        if (rule == null) {
             chain.doFilter(request, response);
             return;
         }
 
-        String key = "ratelimit:%s:%s".formatted(request.getRequestURI(), clientIp(request));
+        String key = "ratelimit:%s:%s".formatted(rule.pattern(), clientIp(request));
         Long count = redisTemplate.opsForValue().increment(key);
         if (count != null && count == 1L) {
             redisTemplate.expire(key, window);
         }
 
-        if (count != null && count > limit) {
+        if (count != null && count > rule.limitPerMinute()) {
             response.setStatus(429);
             response.setContentType("application/json");
             response.getWriter().write("""
@@ -69,6 +92,15 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
 
         chain.doFilter(request, response);
+    }
+
+    private LimitRule matchRule(String requestUri) {
+        for (LimitRule rule : rules) {
+            if (pathMatcher.match(rule.pattern(), requestUri)) {
+                return rule;
+            }
+        }
+        return null;
     }
 
     private String clientIp(HttpServletRequest request) {

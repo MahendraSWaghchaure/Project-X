@@ -52,8 +52,14 @@ docker compose up -d postgres redis   # add "traccar" once you're ready to wire 
 # (or point at natively-installed Postgres+PostGIS/Redis - see above)
 
 cd backend
-mvn -pl app -am spring-boot:run
+mvn -pl app -am spring-boot:run -Dspring-boot.run.profiles=local
 ```
+
+The `local` profile is required: with no real JWT key configured (see `.env`/PEM setup in
+`DEPLOY.md` for real environments), `JwtKeyConfig` now refuses to start on an ephemeral key
+unless the active profile is `local` or `test` - closes a gap where a deployment that forgot to
+set `SPRING_PROFILES_ACTIVE=prod` would previously boot silently on a throwaway key instead of
+failing loudly.
 
 First boot: Flyway applies every module's migrations (they all live under each module's own
 `db/migration/`, scanned together off the classpath). Because each module owns an independent

@@ -49,7 +49,7 @@ public class RouteController {
 
     @PutMapping("/{routeId}/assignment")
     public ApiResponse<RouteResponse> assignRoute(@PathVariable Long schoolId, @PathVariable Long routeId,
-                                                    @RequestBody AssignRouteRequest request) {
+                                                    @Valid @RequestBody AssignRouteRequest request) {
         return ApiResponse.ok(routeService.assignRoute(schoolId, routeId, request));
     }
 

@@ -1,4 +1,6 @@
 package com.projectx.school.dto;
 
-public record AssignRouteRequest(Long vehicleId, Long driverId) {
+import jakarta.validation.constraints.NotNull;
+
+public record AssignRouteRequest(@NotNull Long vehicleId, @NotNull Long driverId) {
 }

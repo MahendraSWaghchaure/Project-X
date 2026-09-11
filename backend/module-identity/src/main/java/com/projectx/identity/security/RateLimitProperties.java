@@ -9,6 +9,9 @@ public class RateLimitProperties {
     private int refreshPerMinute = 30;
     private int driverRegisterPerMinute = 5;
     private int forgotPasswordPerMinute = 5;
+    private int sosTriggerPerMinute = 10;
+    private int childCreatePerMinute = 20;
+    private int paymentOrderPerMinute = 15;
 
     public int getLoginPerMinute() {
         return loginPerMinute;
@@ -40,5 +43,29 @@ public class RateLimitProperties {
 
     public void setForgotPasswordPerMinute(int forgotPasswordPerMinute) {
         this.forgotPasswordPerMinute = forgotPasswordPerMinute;
+    }
+
+    public int getSosTriggerPerMinute() {
+        return sosTriggerPerMinute;
+    }
+
+    public void setSosTriggerPerMinute(int sosTriggerPerMinute) {
+        this.sosTriggerPerMinute = sosTriggerPerMinute;
+    }
+
+    public int getChildCreatePerMinute() {
+        return childCreatePerMinute;
+    }
+
+    public void setChildCreatePerMinute(int childCreatePerMinute) {
+        this.childCreatePerMinute = childCreatePerMinute;
+    }
+
+    public int getPaymentOrderPerMinute() {
+        return paymentOrderPerMinute;
+    }
+
+    public void setPaymentOrderPerMinute(int paymentOrderPerMinute) {
+        this.paymentOrderPerMinute = paymentOrderPerMinute;
     }
 }

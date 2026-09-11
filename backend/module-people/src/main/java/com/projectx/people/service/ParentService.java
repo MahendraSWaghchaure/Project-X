@@ -1,5 +1,6 @@
 package com.projectx.people.service;
 
+import com.projectx.common.events.AuditEvent;
 import com.projectx.common.exception.ResourceNotFoundException;
 import com.projectx.common.geo.GeoPoints;
 import com.projectx.common.security.CurrentUserContext;
@@ -17,6 +18,7 @@ import com.projectx.people.dto.ParentResponse;
 import com.projectx.people.repo.ParentProfileRepository;
 import java.util.List;
 import org.locationtech.jts.geom.Point;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,13 +30,16 @@ public class ParentService {
     private final UserAccountRepository userAccountRepository;
     private final UserProvisioningService userProvisioningService;
     private final InvitationService invitationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ParentService(ParentProfileRepository parentProfileRepository, UserAccountRepository userAccountRepository,
-                          UserProvisioningService userProvisioningService, InvitationService invitationService) {
+                          UserProvisioningService userProvisioningService, InvitationService invitationService,
+                          ApplicationEventPublisher eventPublisher) {
         this.parentProfileRepository = parentProfileRepository;
         this.userAccountRepository = userAccountRepository;
         this.userProvisioningService = userProvisioningService;
         this.invitationService = invitationService;
+        this.eventPublisher = eventPublisher;
     }
 
     public InviteParentResponse inviteParent(Long schoolId, InviteParentRequest request) {
@@ -83,6 +88,8 @@ public class ParentService {
         UserAccount account = userAccountRepository.findById(parent.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("No login for this parent"));
         account.setStatus(UserStatus.DISABLED);
+        eventPublisher.publishEvent(AuditEvent.of("PARENT_DEACTIVATED", "PARENT_PROFILE", parent.getId(), schoolId,
+                "Parent account " + account.getEmail() + " disabled"));
     }
 
     ParentProfile findByUserIdOrThrow(Long userId) {

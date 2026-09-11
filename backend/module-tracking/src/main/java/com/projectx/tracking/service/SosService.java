@@ -1,5 +1,6 @@
 package com.projectx.tracking.service;
 
+import com.projectx.common.events.AuditEvent;
 import com.projectx.common.events.SosRaisedEvent;
 import com.projectx.common.exception.ForbiddenOperationException;
 import com.projectx.common.exception.ResourceNotFoundException;
@@ -69,6 +70,8 @@ public class SosService {
         sosEvent.resolve(CurrentUserContext.get().userId());
         SosEventResponse response = SosEventResponse.from(sosEvent);
         sosBroadcaster.broadcast(response);
+        eventPublisher.publishEvent(AuditEvent.of("SOS_RESOLVED", "SOS_EVENT", sosEvent.getId(), sosEvent.getSchoolId(),
+                "SOS on trip " + sosEvent.getTripId() + " marked resolved"));
         return response;
     }
 }
