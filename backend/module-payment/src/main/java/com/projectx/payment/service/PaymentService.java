@@ -6,6 +6,7 @@ import com.projectx.common.exception.ForbiddenOperationException;
 import com.projectx.common.exception.ResourceNotFoundException;
 import com.projectx.common.security.CurrentUser;
 import com.projectx.common.security.CurrentUserContext;
+import com.projectx.common.web.PageResponse;
 import com.projectx.people.domain.Child;
 import com.projectx.people.domain.ParentProfile;
 import com.projectx.people.repo.ChildRepository;
@@ -29,6 +30,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -165,9 +167,10 @@ public class PaymentService {
     }
 
     @Transactional(readOnly = true)
-    public List<PaymentResponse> listMine() {
+    public PageResponse<PaymentResponse> listMine(Pageable pageable) {
         ParentProfile parent = currentParent();
-        return paymentRepository.findByParentIdOrderByCreatedAtDesc(parent.getId()).stream().map(PaymentResponse::from).toList();
+        return PageResponse.from(
+                paymentRepository.findByParentIdOrderByCreatedAtDesc(parent.getId(), pageable).map(PaymentResponse::from));
     }
 
     @Transactional(readOnly = true)

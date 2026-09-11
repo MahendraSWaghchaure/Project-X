@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -83,6 +84,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         log.warn("Data integrity violation: {}", ex.getMessage());
         return respond(HttpStatus.CONFLICT, "CONFLICT", "This conflicts with existing data - it may already exist");
+    }
+
+    /**
+     * A @Version-guarded entity was modified by someone else between this request reading it and
+     * writing it back - the whole point of optimistic locking is to surface this as a real 409
+     * instead of one write silently clobbering the other. The caller's fix is to re-fetch and
+     * retry, same as any other conflict.
+     */
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOptimisticLockingFailure(ObjectOptimisticLockingFailureException ex) {
+        log.warn("Optimistic locking failure: {}", ex.getMessage());
+        return respond(HttpStatus.CONFLICT, "CONFLICT", "This was changed by someone else just now - please refresh and try again");
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)

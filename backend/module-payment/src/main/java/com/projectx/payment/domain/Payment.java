@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,6 +31,10 @@ public class Payment extends Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /** Guards two concurrent status transitions (e.g. markSuccess/markFailed racing on the same payment) from silently losing one. */
+    @Version
+    private Long version;
 
     @Column(name = "parent_id", nullable = false)
     private Long parentId;

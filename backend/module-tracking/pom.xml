@@ -41,6 +41,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
+        <!-- Backs GeoLookupCacheService's @Cacheable school/route-stop geo lookups - Redis-backed via the connection factory above, no separate cache infra. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
         <!-- LocationCacheService/TraccarWebhookPayload use Jackson directly - see module-identity's pom.xml for why this is explicit rather than transitive. -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

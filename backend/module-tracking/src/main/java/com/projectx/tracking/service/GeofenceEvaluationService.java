@@ -4,13 +4,10 @@ import com.projectx.common.events.GeofenceEventType;
 import com.projectx.common.events.GeofenceRaisedEvent;
 import com.projectx.common.geo.GeoPoints;
 import com.projectx.people.repo.ChildRepository;
-import com.projectx.school.domain.RouteStop;
-import com.projectx.school.domain.School;
-import com.projectx.school.repo.RouteStopRepository;
-import com.projectx.school.repo.SchoolRepository;
 import com.projectx.tracking.domain.GeofenceEvent;
 import com.projectx.tracking.domain.Trip;
 import com.projectx.tracking.repo.GeofenceEventRepository;
+import com.projectx.tracking.service.GeoLookupCacheService.StopGeoInfo;
 import java.time.Instant;
 import org.locationtech.jts.geom.Point;
 import org.springframework.context.ApplicationEventPublisher;
@@ -21,7 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
  * Runs on every ingested ping for a trip in progress. "Approaching" fires at
  * APPROACHING_MULTIPLIER x the arrival radius so parents get a heads-up before the vehicle is
  * already there; each event type fires at most once per trip (school-wide) or once per
- * child-per-trip (per-stop), enforced via GeofenceEventRepository lookups before insert.
+ * child-per-trip (per-stop), enforced via GeofenceEventRepository lookups before insert. School
+ * location and route-stop lookups go through GeoLookupCacheService rather than the repositories
+ * directly - this runs on every ping, the busiest read path in the app.
  */
 @Service
 @Transactional
@@ -29,18 +28,16 @@ public class GeofenceEvaluationService {
 
     private static final int APPROACHING_MULTIPLIER = 3;
 
-    private final SchoolRepository schoolRepository;
-    private final RouteStopRepository routeStopRepository;
+    private final GeoLookupCacheService geoLookupCacheService;
     private final ChildRepository childRepository;
     private final GeofenceEventRepository geofenceEventRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final GeofenceEventKeySeenFilter keySeenFilter;
 
-    public GeofenceEvaluationService(SchoolRepository schoolRepository, RouteStopRepository routeStopRepository,
-                                      ChildRepository childRepository, GeofenceEventRepository geofenceEventRepository,
+    public GeofenceEvaluationService(GeoLookupCacheService geoLookupCacheService, ChildRepository childRepository,
+                                      GeofenceEventRepository geofenceEventRepository,
                                       ApplicationEventPublisher eventPublisher, GeofenceEventKeySeenFilter keySeenFilter) {
-        this.schoolRepository = schoolRepository;
-        this.routeStopRepository = routeStopRepository;
+        this.geoLookupCacheService = geoLookupCacheService;
         this.childRepository = childRepository;
         this.geofenceEventRepository = geofenceEventRepository;
         this.eventPublisher = eventPublisher;
@@ -53,31 +50,33 @@ public class GeofenceEvaluationService {
     }
 
     private void evaluateSchoolGeofence(Trip trip, Point currentLocation) {
-        School school = schoolRepository.findById(trip.getSchoolId()).orElse(null);
-        if (school == null || school.getLocation() == null) {
+        var schoolGeoInfo = geoLookupCacheService.getSchoolGeoInfo(trip.getSchoolId()).orElse(null);
+        if (schoolGeoInfo == null) {
             return;
         }
-        double distance = GeoPoints.distanceMeters(school.getLocation(), currentLocation);
-        if (distance <= school.getGeofenceRadiusMeters()) {
+        Point schoolLocation = GeoPoints.toPoint(schoolGeoInfo.location());
+        double distance = GeoPoints.distanceMeters(schoolLocation, currentLocation);
+        if (distance <= schoolGeoInfo.geofenceRadiusMeters()) {
             raiseSchoolWideOnce(trip, GeofenceEventType.ARRIVED_SCHOOL);
-        } else if (distance <= school.getGeofenceRadiusMeters() * (double) APPROACHING_MULTIPLIER) {
+        } else if (distance <= schoolGeoInfo.geofenceRadiusMeters() * (double) APPROACHING_MULTIPLIER) {
             raiseSchoolWideOnce(trip, GeofenceEventType.APPROACHING_SCHOOL);
         }
     }
 
     private void evaluateStopGeofences(Trip trip, Point currentLocation) {
-        for (RouteStop stop : routeStopRepository.findByRouteIdOrderBySequenceNumberAsc(trip.getRouteId())) {
-            double distance = GeoPoints.distanceMeters(stop.getLocation(), currentLocation);
+        for (StopGeoInfo stop : geoLookupCacheService.getStopGeoInfo(trip.getRouteId())) {
+            Point stopLocation = GeoPoints.toPoint(stop.location());
+            double distance = GeoPoints.distanceMeters(stopLocation, currentLocation);
             GeofenceEventType type;
-            if (distance <= stop.getRadiusMeters()) {
+            if (distance <= stop.radiusMeters()) {
                 type = GeofenceEventType.ARRIVED_STOP;
-            } else if (distance <= stop.getRadiusMeters() * (double) APPROACHING_MULTIPLIER) {
+            } else if (distance <= stop.radiusMeters() * (double) APPROACHING_MULTIPLIER) {
                 type = GeofenceEventType.APPROACHING_STOP;
             } else {
                 continue;
             }
-            childRepository.findByRouteStopId(stop.getId())
-                    .forEach(child -> raisePerChildOnce(trip, stop.getId(), child.getId(), type));
+            childRepository.findByRouteStopId(stop.id())
+                    .forEach(child -> raisePerChildOnce(trip, stop.id(), child.getId(), type));
         }
     }
 

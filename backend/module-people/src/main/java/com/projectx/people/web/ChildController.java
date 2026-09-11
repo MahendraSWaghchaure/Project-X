@@ -1,6 +1,7 @@
 package com.projectx.people.web;
 
 import com.projectx.common.web.ApiResponse;
+import com.projectx.common.web.PageResponse;
 import com.projectx.people.dto.AssignChildRouteStopRequest;
 import com.projectx.people.dto.ChildDriverResponse;
 import com.projectx.people.dto.ChildResponse;
@@ -12,6 +13,8 @@ import com.projectx.people.dto.UpdateChildRequest;
 import com.projectx.people.service.ChildService;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -44,8 +47,9 @@ public class ChildController {
 
     @GetMapping("/schools/{schoolId}/children")
     @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SCHOOL_ADMIN')")
-    public ApiResponse<List<ChildResponse>> listChildrenForSchool(@PathVariable Long schoolId) {
-        return ApiResponse.ok(childService.listChildrenForSchool(schoolId));
+    public ApiResponse<PageResponse<ChildResponse>> listChildrenForSchool(
+            @PathVariable Long schoolId, @PageableDefault(size = 50) Pageable pageable) {
+        return ApiResponse.ok(childService.listChildrenForSchool(schoolId, pageable));
     }
 
     @GetMapping("/schools/{schoolId}/routes/{routeId}/children")

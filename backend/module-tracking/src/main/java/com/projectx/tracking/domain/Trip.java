@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.time.Instant;
 import java.time.LocalDate;
 
@@ -19,6 +20,10 @@ public class Trip extends Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /** Guards against two concurrent status transitions (e.g. start() and cancel() racing) silently losing one - see GlobalExceptionHandler's ObjectOptimisticLockingFailureException mapping. */
+    @Version
+    private Long version;
 
     @Column(name = "school_id", nullable = false)
     private Long schoolId;

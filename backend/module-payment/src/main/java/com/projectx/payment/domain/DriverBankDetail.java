@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 /**
  * razorpayContactId/razorpayFundAccountId are cached once RazorpayX creates them for this driver,
@@ -20,6 +21,10 @@ public class DriverBankDetail extends Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /** Guards a driver's own concurrent bank-detail edits (e.g. two tabs saving at once) from silently losing one. */
+    @Version
+    private Long version;
 
     @Column(name = "driver_id", nullable = false, unique = true)
     private Long driverId;

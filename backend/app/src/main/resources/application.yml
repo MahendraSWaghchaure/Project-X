@@ -6,6 +6,20 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/projectx}
     username: ${DB_USERNAME:projectx}
     password: ${DB_PASSWORD:projectx}
+    hikari:
+      # Spring Boot's own default (10) was sized for a plain request/response app - this one now
+      # also has two async executors (notificationExecutor max 16, trackingExecutor max 32, see
+      # their respective AsyncConfig classes) doing DB work off the request thread. 25 comfortably
+      # covers a realistic mix of Tomcat request threads + async work without the pool approaching
+      # Postgres's own default max_connections=100 ceiling, even with headroom for the fact this
+      # is one instance today but the number should stay reasonable if that ever changes.
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:25}
+      minimum-idle: ${DB_POOL_MIN_IDLE:5}
+      connection-timeout: ${DB_POOL_CONNECTION_TIMEOUT_MS:10000}
+      # Logs a warning (not a failure) if a connection is held longer than this without being
+      # returned to the pool - the standard way to catch a leaked/forgotten connection in dev
+      # before it becomes pool exhaustion in production.
+      leak-detection-threshold: ${DB_POOL_LEAK_DETECTION_MS:30000}
 
   jpa:
     open-in-view: false
@@ -18,6 +32,13 @@ spring:
         # dialect as long as hibernate-spatial is on the classpath - no separate "spatial dialect"
         # class needed (that was a Hibernate 5-era requirement).
         format_sql: false
+        # Batches consecutive inserts/updates of the same entity type into fewer round trips -
+        # matters most for FeeInvoiceService.ensureInvoicesExistForMonth, which now uses saveAll()
+        # across every active child at a school instead of one save() per child.
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
 
   flyway:
     enabled: true
@@ -47,6 +68,14 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+  tomcat:
+    threads:
+      # Spring Boot's defaults (max 200, min-spare 10) are sized for a generic app; this app's
+      # actual request-handling load is bounded by the same free-tier VM's CPU/memory long before
+      # 200 concurrent request threads would ever be useful, and a smaller max means faster
+      # rejection under real overload instead of every thread queuing behind a starved DB pool.
+      max: ${TOMCAT_MAX_THREADS:100}
+      min-spare: ${TOMCAT_MIN_SPARE_THREADS:10}
 
 management:
   endpoints:

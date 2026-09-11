@@ -17,7 +17,10 @@ import com.projectx.payment.repo.FeeInvoiceRepository;
 import com.projectx.payment.repo.FeeScheduleRepository;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +53,13 @@ public class FeeInvoiceService {
         this.parentProfileRepository = parentProfileRepository;
     }
 
-    /** Ensures every active child has an invoice for the given billing month, creating any that are missing. Idempotent. */
+    /**
+     * Ensures every active child has an invoice for the given billing month, creating any that
+     * are missing. Idempotent. Runs against every active child at every school with a fee
+     * schedule, every month - was one exists-check query plus one save() per child; now one
+     * exists-check query plus one saveAll() per school regardless of how many children it has
+     * (hibernate.jdbc.batch_size groups the inserts into batched round trips too).
+     */
     public void ensureInvoicesExistForMonth(YearMonth billingMonth) {
         LocalDate monthStart = billingMonth.atDay(1);
         LocalDate dueDate = billingMonth.atDay(Math.min(DUE_DAY_OF_MONTH, billingMonth.lengthOfMonth()));
@@ -59,14 +68,25 @@ public class FeeInvoiceService {
             List<Child> activeChildren = childRepository.findBySchoolId(schedule.getSchoolId()).stream()
                     .filter(c -> c.getStatus() == ChildStatus.ACTIVE)
                     .toList();
+            if (activeChildren.isEmpty()) {
+                continue;
+            }
+            Set<Long> childIdsAlreadyInvoiced = feeInvoiceRepository
+                    .findByChildIdInAndBillingMonth(activeChildren.stream().map(Child::getId).toList(), monthStart).stream()
+                    .map(FeeInvoice::getChildId)
+                    .collect(Collectors.toSet());
+
+            List<FeeInvoice> newInvoices = new ArrayList<>();
             for (Child child : activeChildren) {
-                if (feeInvoiceRepository.existsByChildIdAndBillingMonth(child.getId(), monthStart)) {
+                if (childIdsAlreadyInvoiced.contains(child.getId())) {
                     continue;
                 }
-                FeeInvoice invoice = new FeeInvoice(child.getId(), child.getPrimaryParentId(), child.getSchoolId(),
-                        monthStart, schedule.getMonthlyAmount(), dueDate);
-                feeInvoiceRepository.save(invoice);
-                log.info("Generated fee invoice for child {} for {}", child.getId(), monthStart);
+                newInvoices.add(new FeeInvoice(child.getId(), child.getPrimaryParentId(), child.getSchoolId(),
+                        monthStart, schedule.getMonthlyAmount(), dueDate));
+            }
+            if (!newInvoices.isEmpty()) {
+                feeInvoiceRepository.saveAll(newInvoices);
+                log.info("Generated {} fee invoice(s) for school {} for {}", newInvoices.size(), schedule.getSchoolId(), monthStart);
             }
         }
     }

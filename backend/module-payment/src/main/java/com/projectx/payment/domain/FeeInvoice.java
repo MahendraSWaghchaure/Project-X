@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -31,6 +32,10 @@ public class FeeInvoice extends Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /** Guards markPaid()/accrueLateFeeForToday() racing on the same invoice from silently losing one write. */
+    @Version
+    private Long version;
 
     @Column(name = "child_id", nullable = false)
     private Long childId;

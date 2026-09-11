@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -25,6 +26,10 @@ public class DriverProfile extends Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /** Guards concurrent edits (e.g. employment-status change racing a verification-status change) from silently losing one. */
+    @Version
+    private Long version;
 
     @Column(name = "user_id", nullable = false, unique = true)
     private Long userId;

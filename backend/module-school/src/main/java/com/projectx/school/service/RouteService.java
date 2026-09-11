@@ -14,6 +14,8 @@ import com.projectx.school.dto.UpdateRouteZoneRequest;
 import com.projectx.school.repo.RouteRepository;
 import com.projectx.school.repo.RouteStopRepository;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,11 +46,17 @@ public class RouteService {
         return RouteResponse.from(route, toStopResponses(stops));
     }
 
+    /** Was 1 query for routes + N queries for stops (one per route) - now 2 queries total regardless of how many routes a school has. */
     @Transactional(readOnly = true)
     public List<RouteResponse> listRoutes(Long schoolId) {
         CurrentUserContext.requireSchoolAccess(schoolId);
-        return routeRepository.findBySchoolId(schoolId).stream()
-                .map(route -> RouteResponse.from(route, stopsFor(route.getId())))
+        List<Route> routes = routeRepository.findBySchoolId(schoolId);
+        List<Long> routeIds = routes.stream().map(Route::getId).toList();
+        Map<Long, List<RouteStop>> stopsByRouteId = routeStopRepository
+                .findByRouteIdInOrderByRouteIdAscSequenceNumberAsc(routeIds).stream()
+                .collect(Collectors.groupingBy(RouteStop::getRouteId));
+        return routes.stream()
+                .map(route -> RouteResponse.from(route, toStopResponses(stopsByRouteId.getOrDefault(route.getId(), List.of()))))
                 .toList();
     }
 

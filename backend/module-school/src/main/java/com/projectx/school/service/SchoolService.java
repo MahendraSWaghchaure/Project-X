@@ -1,5 +1,6 @@
 package com.projectx.school.service;
 
+import com.projectx.common.events.SchoolLocationChangedEvent;
 import com.projectx.common.exception.ResourceNotFoundException;
 import com.projectx.common.geo.GeoPoints;
 import com.projectx.common.security.CurrentUserContext;
@@ -16,6 +17,7 @@ import com.projectx.school.repo.SchoolAdminProfileRepository;
 import com.projectx.school.repo.SchoolRepository;
 import java.util.List;
 import org.locationtech.jts.geom.Point;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,12 +28,14 @@ public class SchoolService {
     private final SchoolRepository schoolRepository;
     private final SchoolAdminProfileRepository schoolAdminProfileRepository;
     private final UserProvisioningService userProvisioningService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public SchoolService(SchoolRepository schoolRepository, SchoolAdminProfileRepository schoolAdminProfileRepository,
-                          UserProvisioningService userProvisioningService) {
+                          UserProvisioningService userProvisioningService, ApplicationEventPublisher eventPublisher) {
         this.schoolRepository = schoolRepository;
         this.schoolAdminProfileRepository = schoolAdminProfileRepository;
         this.userProvisioningService = userProvisioningService;
+        this.eventPublisher = eventPublisher;
     }
 
     /** Platform admin onboarding flow: create the tenant and its first school admin login atomically. */
@@ -81,6 +85,7 @@ public class SchoolService {
             school.setGeofenceRadiusMeters(request.geofenceRadiusMeters());
         }
         school.setDismissalTime(request.dismissalTime());
+        eventPublisher.publishEvent(new SchoolLocationChangedEvent(schoolId));
         return SchoolResponse.from(school);
     }
 

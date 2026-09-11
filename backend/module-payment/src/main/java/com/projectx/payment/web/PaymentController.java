@@ -1,6 +1,7 @@
 package com.projectx.payment.web;
 
 import com.projectx.common.web.ApiResponse;
+import com.projectx.common.web.PageResponse;
 import com.projectx.payment.dto.AdvancePaymentRequest;
 import com.projectx.payment.dto.CreatePaymentOrderResponse;
 import com.projectx.payment.dto.PayInvoicesRequest;
@@ -9,6 +10,8 @@ import com.projectx.payment.dto.VerifyPaymentRequest;
 import com.projectx.payment.service.PaymentService;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,8 +52,8 @@ public class PaymentController {
 
     @GetMapping("/parents/me/payments")
     @PreAuthorize("hasRole('PARENT')")
-    public ApiResponse<List<PaymentResponse>> listMine() {
-        return ApiResponse.ok(paymentService.listMine());
+    public ApiResponse<PageResponse<PaymentResponse>> listMine(@PageableDefault(size = 30) Pageable pageable) {
+        return ApiResponse.ok(paymentService.listMine(pageable));
     }
 
     /** Doubles as the receipt view - a Payment IS the receipt once SUCCESS, see PaymentResponse.receiptNumber. */

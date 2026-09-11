@@ -4,6 +4,7 @@ import com.projectx.common.events.AuditEvent;
 import com.projectx.common.exception.ConflictException;
 import com.projectx.common.exception.ForbiddenOperationException;
 import com.projectx.common.exception.ResourceNotFoundException;
+import com.projectx.common.web.PageResponse;
 import com.projectx.common.geo.GeoPoints;
 import com.projectx.common.security.CurrentUserContext;
 import com.projectx.people.domain.Child;
@@ -30,6 +31,7 @@ import java.util.Comparator;
 import java.util.List;
 import org.locationtech.jts.geom.Point;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -93,9 +95,9 @@ public class ChildService {
     }
 
     @Transactional(readOnly = true)
-    public List<ChildResponse> listChildrenForSchool(Long schoolId) {
+    public PageResponse<ChildResponse> listChildrenForSchool(Long schoolId, Pageable pageable) {
         CurrentUserContext.requireSchoolAccess(schoolId);
-        return childRepository.findBySchoolId(schoolId).stream().map(ChildResponse::from).toList();
+        return PageResponse.from(childRepository.findBySchoolId(schoolId, pageable).map(ChildResponse::from));
     }
 
     @Transactional(readOnly = true)
