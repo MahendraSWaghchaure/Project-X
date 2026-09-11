@@ -1,6 +1,7 @@
 package com.projectx.grievance.repo;
 
 import com.projectx.grievance.domain.Grievance;
+import com.projectx.grievance.domain.GrievanceStatus;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -11,4 +12,8 @@ public interface GrievanceRepository extends JpaRepository<Grievance, Long> {
     List<Grievance> findBySchoolIdOrderByCreatedAtDesc(Long schoolId);
 
     List<Grievance> findAllByOrderByCreatedAtDesc();
+
+    long countByStatusIn(List<GrievanceStatus> statuses);
+
+    long countBySchoolIdAndStatusIn(Long schoolId, List<GrievanceStatus> statuses);
 }

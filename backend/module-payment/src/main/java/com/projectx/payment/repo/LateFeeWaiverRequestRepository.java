@@ -13,4 +13,6 @@ public interface LateFeeWaiverRequestRepository extends JpaRepository<LateFeeWai
     List<LateFeeWaiverRequest> findByParentIdOrderByCreatedAtDesc(Long parentId);
 
     Optional<LateFeeWaiverRequest> findByFeeInvoiceIdAndStatus(Long feeInvoiceId, WaiverStatus status);
+
+    long countByStatus(WaiverStatus status);
 }

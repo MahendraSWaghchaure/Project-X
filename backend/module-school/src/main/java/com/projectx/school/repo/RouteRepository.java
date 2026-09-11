@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface RouteRepository extends JpaRepository<Route, Long> {
 
     List<Route> findBySchoolId(Long schoolId);
+
+    long countBySchoolId(Long schoolId);
 }

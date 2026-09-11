@@ -1,6 +1,7 @@
 package com.projectx.people.repo;
 
 import com.projectx.people.domain.DriverProfile;
+import com.projectx.people.domain.DriverVerificationStatus;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,4 +17,10 @@ public interface DriverProfileRepository extends JpaRepository<DriverProfile, Lo
     Optional<DriverProfile> findByVehicleId(Long vehicleId);
 
     boolean existsByLicenseNumberIgnoreCase(String licenseNumber);
+
+    long countBySchoolId(Long schoolId);
+
+    long countBySchoolIdIsNull();
+
+    long countBySchoolIdAndVerificationStatus(Long schoolId, DriverVerificationStatus verificationStatus);
 }

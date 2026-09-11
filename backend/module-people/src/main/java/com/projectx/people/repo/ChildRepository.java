@@ -18,4 +18,6 @@ public interface ChildRepository extends JpaRepository<Child, Long> {
     List<Child> findByRouteId(Long routeId);
 
     List<Child> findByRouteStopId(Long routeStopId);
+
+    long countBySchoolId(Long schoolId);
 }
