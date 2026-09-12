@@ -1,6 +1,8 @@
 package com.projectx.people.dto;
 
+import com.projectx.common.validation.Patterns;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
@@ -13,6 +15,6 @@ public record CreateChildRequest(
         Long primaryParentId,
         @Size(max = 8) String bloodType,
         String emergencyContactName,
-        @Size(max = 32) String emergencyContactPhone,
+        @Size(max = 32) @Pattern(regexp = Patterns.PHONE, message = Patterns.PHONE_MESSAGE) String emergencyContactPhone,
         @Size(max = 500) String allergies) {
 }

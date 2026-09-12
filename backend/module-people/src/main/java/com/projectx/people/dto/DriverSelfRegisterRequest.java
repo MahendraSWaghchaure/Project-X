@@ -1,5 +1,6 @@
 package com.projectx.people.dto;
 
+import com.projectx.common.validation.Patterns;
 import com.projectx.school.domain.VehicleType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
@@ -15,7 +16,7 @@ public record DriverSelfRegisterRequest(
         @NotBlank @Size(max = 100) String lastName,
         @NotBlank @Email @Size(max = 255) String email,
         @NotBlank @Size(min = 8, max = 255) String password,
-        @NotBlank @Size(max = 32) String phone,
+        @NotBlank @Size(max = 32) @Pattern(regexp = Patterns.PHONE, message = Patterns.PHONE_MESSAGE) String phone,
         @NotBlank @Size(max = 64) String licenseNumber,
         LocalDate licenseExpiry,
 

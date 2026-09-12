@@ -38,7 +38,11 @@ class RazorpayHttpClient {
             return client(properties.getKeyId(), properties.getKeySecret())
                     .post().uri(path).body(body).retrieve().body(JSON_MAP);
         } catch (RestClientResponseException e) {
-            throw new PaymentGatewayException("Razorpay API call to " + path + " failed: " + e.getStatusCode() + " " + e.getResponseBodyAsString(), e);
+            // e (and its response body) is preserved as the cause for server-side logging - kept out
+            // of the exception's own message since that message ends up in PaymentExceptionHandler's
+            // client response and PayrollRecord.failureReason, both of which reach real API callers,
+            // and a raw third-party response body has no business leaking to either.
+            throw new PaymentGatewayException("Razorpay API call to " + path + " failed with status " + e.getStatusCode(), e);
         }
     }
 
@@ -47,7 +51,11 @@ class RazorpayHttpClient {
             return client(properties.getKeyId(), properties.getKeySecret())
                     .get().uri(path).retrieve().body(JSON_MAP);
         } catch (RestClientResponseException e) {
-            throw new PaymentGatewayException("Razorpay API call to " + path + " failed: " + e.getStatusCode() + " " + e.getResponseBodyAsString(), e);
+            // e (and its response body) is preserved as the cause for server-side logging - kept out
+            // of the exception's own message since that message ends up in PaymentExceptionHandler's
+            // client response and PayrollRecord.failureReason, both of which reach real API callers,
+            // and a raw third-party response body has no business leaking to either.
+            throw new PaymentGatewayException("Razorpay API call to " + path + " failed with status " + e.getStatusCode(), e);
         }
     }
 }

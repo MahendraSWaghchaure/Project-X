@@ -69,7 +69,11 @@ public class PayrollDisbursementService {
                 paid++;
             } catch (RuntimeException e) {
                 record.markFailed(e.getMessage());
-                log.error("Payroll disbursement failed for driver {} ({}): {}", driver.getId(), periodStart, e.getMessage());
+                // e itself (not e.getMessage()) as the trailing arg so SLF4J logs the full stack
+                // trace, including any cause - e.g. Razorpay's raw response body on a gateway
+                // failure, which e.getMessage() deliberately no longer includes (see
+                // RazorpayHttpClient) since that message is also what's stored/exposed above.
+                log.error("Payroll disbursement failed for driver {} ({})", driver.getId(), periodStart, e);
                 failed++;
             }
         }

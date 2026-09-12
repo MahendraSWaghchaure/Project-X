@@ -1,6 +1,7 @@
 package com.projectx.insurance.dto;
 
 import com.projectx.insurance.domain.InsuredSubjectType;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -11,7 +12,7 @@ public record CreateInsurancePolicyRequest(
         @NotNull Long subjectId,
         @NotBlank String provider,
         @NotBlank String policyNumber,
-        BigDecimal coverageAmount,
+        @DecimalMin("0.0") BigDecimal coverageAmount,
         @NotNull LocalDate startDate,
         @NotNull LocalDate endDate) {
 }
