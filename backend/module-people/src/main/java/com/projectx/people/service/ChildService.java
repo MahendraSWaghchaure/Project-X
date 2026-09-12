@@ -1,7 +1,6 @@
 package com.projectx.people.service;
 
 import com.projectx.common.events.AuditEvent;
-import com.projectx.common.exception.ConflictException;
 import com.projectx.common.exception.ForbiddenOperationException;
 import com.projectx.common.exception.ResourceNotFoundException;
 import com.projectx.common.web.PageResponse;
@@ -47,13 +46,14 @@ public class ChildService {
     private final RouteStopRepository routeStopRepository;
     private final DriverProfileRepository driverProfileRepository;
     private final ChildQrTokenService childQrTokenService;
+    private final GuardianAccessService guardianAccessService;
     private final ApplicationEventPublisher eventPublisher;
 
     public ChildService(ChildRepository childRepository, ParentProfileRepository parentProfileRepository,
                          ParentService parentService, SchoolRepository schoolRepository,
                          RouteRepository routeRepository, RouteStopRepository routeStopRepository,
                          DriverProfileRepository driverProfileRepository, ChildQrTokenService childQrTokenService,
-                         ApplicationEventPublisher eventPublisher) {
+                         GuardianAccessService guardianAccessService, ApplicationEventPublisher eventPublisher) {
         this.childRepository = childRepository;
         this.parentProfileRepository = parentProfileRepository;
         this.parentService = parentService;
@@ -62,6 +62,7 @@ public class ChildService {
         this.routeStopRepository = routeStopRepository;
         this.driverProfileRepository = driverProfileRepository;
         this.childQrTokenService = childQrTokenService;
+        this.guardianAccessService = guardianAccessService;
         this.eventPublisher = eventPublisher;
     }
 
@@ -103,7 +104,7 @@ public class ChildService {
     @Transactional(readOnly = true)
     public List<ChildResponse> listMyChildren() {
         ParentProfile parent = parentService.findByUserIdOrThrow(CurrentUserContext.get().userId());
-        return childRepository.findByPrimaryParentIdOrSecondaryParentId(parent.getId(), parent.getId()).stream()
+        return childRepository.findByGuardianParentId(parent.getId()).stream()
                 .map(ChildResponse::from)
                 .toList();
     }
@@ -177,7 +178,7 @@ public class ChildService {
     public ChildResponse updateChildAsParent(Long childId, UpdateChildRequest request) {
         ParentProfile parent = parentService.findByUserIdOrThrow(CurrentUserContext.get().userId());
         Child child = childRepository.findById(childId).orElseThrow(() -> ResourceNotFoundException.of("Child", childId));
-        if (!child.isGuardian(parent.getId())) {
+        if (!guardianAccessService.isGuardian(child, parent.getId())) {
             throw new ForbiddenOperationException("Not a guardian of this child");
         }
         child.updateDetails(request.firstName(), request.lastName(), request.dateOfBirth(), request.classSection());
@@ -193,7 +194,7 @@ public class ChildService {
     public ChildDriverResponse getMyChildDriver(Long childId) {
         ParentProfile parent = parentService.findByUserIdOrThrow(CurrentUserContext.get().userId());
         Child child = childRepository.findById(childId).orElseThrow(() -> ResourceNotFoundException.of("Child", childId));
-        if (!child.isGuardian(parent.getId())) {
+        if (!guardianAccessService.isGuardian(child, parent.getId())) {
             throw new ForbiddenOperationException("Not a guardian of this child");
         }
         if (child.getRouteId() == null) {
@@ -214,7 +215,7 @@ public class ChildService {
     public String getMyChildQrToken(Long childId) {
         ParentProfile parent = parentService.findByUserIdOrThrow(CurrentUserContext.get().userId());
         Child child = childRepository.findById(childId).orElseThrow(() -> ResourceNotFoundException.of("Child", childId));
-        if (!child.isGuardian(parent.getId())) {
+        if (!guardianAccessService.isGuardian(child, parent.getId())) {
             throw new ForbiddenOperationException("Not a guardian of this child");
         }
         return childQrTokenService.generateToken(child.getId());
@@ -227,18 +228,15 @@ public class ChildService {
         return childQrTokenService.generateToken(child.getId());
     }
 
-    /** A guardian invites a second guardian for an existing child - reuses the exact same invite/accept machinery as the first parent invite, just attached to secondaryParentId instead of creating a new child. */
-    public InviteParentResponse inviteSecondGuardian(Long childId, InviteParentRequest request) {
+    /** Any existing guardian can invite another - unlimited, unlike the old single-secondary-slot model. Reuses the exact same invite/accept machinery as the first parent invite, just recorded as a child_guardians row instead of creating a new child. */
+    public InviteParentResponse inviteGuardian(Long childId, InviteParentRequest request) {
         ParentProfile parent = parentService.findByUserIdOrThrow(CurrentUserContext.get().userId());
         Child child = childRepository.findById(childId).orElseThrow(() -> ResourceNotFoundException.of("Child", childId));
-        if (!child.isGuardian(parent.getId())) {
+        if (!guardianAccessService.isGuardian(child, parent.getId())) {
             throw new ForbiddenOperationException("Not a guardian of this child");
         }
-        if (child.getSecondaryParentId() != null) {
-            throw new ConflictException("This child already has two guardians");
-        }
         InviteParentResponse response = parentService.provisionParentInvite(child.getSchoolId(), request);
-        child.setSecondaryParentId(response.parentProfileId());
+        guardianAccessService.addGuardian(child.getId(), response.parentProfileId());
         return response;
     }
 

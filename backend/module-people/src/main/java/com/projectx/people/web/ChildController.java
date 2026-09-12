@@ -92,9 +92,9 @@ public class ChildController {
     @PostMapping("/parents/me/children/{childId}/invite-guardian")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('PARENT')")
-    public ApiResponse<InviteParentResponse> inviteSecondGuardian(@PathVariable Long childId,
-                                                                     @Valid @RequestBody InviteParentRequest request) {
-        return ApiResponse.ok(childService.inviteSecondGuardian(childId, request));
+    public ApiResponse<InviteParentResponse> inviteGuardian(@PathVariable Long childId,
+                                                              @Valid @RequestBody InviteParentRequest request) {
+        return ApiResponse.ok(childService.inviteGuardian(childId, request));
     }
 
     @PutMapping("/schools/{schoolId}/children/{childId}/route-stop")

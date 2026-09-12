@@ -6,6 +6,7 @@ import com.projectx.notification.service.NotificationDispatchService;
 import com.projectx.people.domain.Child;
 import com.projectx.people.repo.ChildRepository;
 import com.projectx.people.repo.ParentProfileRepository;
+import com.projectx.people.service.GuardianAccessService;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -16,12 +17,14 @@ public class ChildTripStatusListener {
 
     private final ChildRepository childRepository;
     private final ParentProfileRepository parentProfileRepository;
+    private final GuardianAccessService guardianAccessService;
     private final NotificationDispatchService dispatchService;
 
     public ChildTripStatusListener(ChildRepository childRepository, ParentProfileRepository parentProfileRepository,
-                                    NotificationDispatchService dispatchService) {
+                                    GuardianAccessService guardianAccessService, NotificationDispatchService dispatchService) {
         this.childRepository = childRepository;
         this.parentProfileRepository = parentProfileRepository;
+        this.guardianAccessService = guardianAccessService;
         this.dispatchService = dispatchService;
     }
 
@@ -36,10 +39,7 @@ public class ChildTripStatusListener {
         }
         String subject = subjectFor(event.type());
         String body = subject + " - " + child.getFirstName() + " " + child.getLastName();
-        notify(child.getPrimaryParentId(), event, subject, body);
-        if (child.getSecondaryParentId() != null) {
-            notify(child.getSecondaryParentId(), event, subject, body);
-        }
+        guardianAccessService.allGuardianIds(child).forEach(parentId -> notify(parentId, event, subject, body));
     }
 
     private void notify(Long parentProfileId, ChildTripStatusChangedEvent event, String subject, String body) {

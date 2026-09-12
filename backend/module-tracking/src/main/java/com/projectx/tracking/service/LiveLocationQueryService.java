@@ -7,6 +7,7 @@ import com.projectx.people.domain.Child;
 import com.projectx.people.domain.ParentProfile;
 import com.projectx.people.repo.ChildRepository;
 import com.projectx.people.repo.ParentProfileRepository;
+import com.projectx.people.service.GuardianAccessService;
 import com.projectx.school.domain.Route;
 import com.projectx.school.domain.Vehicle;
 import com.projectx.school.repo.RouteRepository;
@@ -25,15 +26,18 @@ public class LiveLocationQueryService {
     private final RouteRepository routeRepository;
     private final ChildRepository childRepository;
     private final ParentProfileRepository parentProfileRepository;
+    private final GuardianAccessService guardianAccessService;
 
     public LiveLocationQueryService(LocationCacheService locationCacheService, VehicleRepository vehicleRepository,
                                      RouteRepository routeRepository, ChildRepository childRepository,
-                                     ParentProfileRepository parentProfileRepository) {
+                                     ParentProfileRepository parentProfileRepository,
+                                     GuardianAccessService guardianAccessService) {
         this.locationCacheService = locationCacheService;
         this.vehicleRepository = vehicleRepository;
         this.routeRepository = routeRepository;
         this.childRepository = childRepository;
         this.parentProfileRepository = parentProfileRepository;
+        this.guardianAccessService = guardianAccessService;
     }
 
     public CachedLocation getVehicleLocation(Long schoolId, Long vehicleId) {
@@ -52,7 +56,7 @@ public class LiveLocationQueryService {
         ParentProfile parent = parentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ForbiddenOperationException("No parent profile for current user"));
         Child child = childRepository.findById(childId).orElseThrow(() -> ResourceNotFoundException.of("Child", childId));
-        if (!child.isGuardian(parent.getId())) {
+        if (!guardianAccessService.isGuardian(child, parent.getId())) {
             throw new ForbiddenOperationException("Not a guardian of this child");
         }
         if (child.getRouteId() == null) {

@@ -11,6 +11,7 @@ import com.projectx.people.domain.ParentProfile;
 import com.projectx.people.repo.ChildRepository;
 import com.projectx.people.repo.ParentProfileRepository;
 import com.projectx.people.service.ChildQrTokenService;
+import com.projectx.people.service.GuardianAccessService;
 import com.projectx.tracking.domain.ChildTripEvent;
 import com.projectx.tracking.domain.Trip;
 import com.projectx.tracking.dto.ChildTripEventResponse;
@@ -46,11 +47,12 @@ public class ChildTripEventService {
     private final TripService tripService;
     private final ApplicationEventPublisher eventPublisher;
     private final ChildQrTokenService childQrTokenService;
+    private final GuardianAccessService guardianAccessService;
 
     public ChildTripEventService(TripRepository tripRepository, ChildTripEventRepository childTripEventRepository,
                                   ChildRepository childRepository, ParentProfileRepository parentProfileRepository,
                                   TripService tripService, ApplicationEventPublisher eventPublisher,
-                                  ChildQrTokenService childQrTokenService) {
+                                  ChildQrTokenService childQrTokenService, GuardianAccessService guardianAccessService) {
         this.tripRepository = tripRepository;
         this.childTripEventRepository = childTripEventRepository;
         this.childRepository = childRepository;
@@ -58,6 +60,7 @@ public class ChildTripEventService {
         this.tripService = tripService;
         this.eventPublisher = eventPublisher;
         this.childQrTokenService = childQrTokenService;
+        this.guardianAccessService = guardianAccessService;
     }
 
     public ChildTripEventResponse recordDriverMarkedEvent(Long tripId, Long childId, ChildTripEventType type) {
@@ -80,7 +83,7 @@ public class ChildTripEventService {
         ParentProfile parent = parentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ForbiddenOperationException("No parent profile for current user"));
         Child child = childRepository.findById(childId).orElseThrow(() -> ResourceNotFoundException.of("Child", childId));
-        if (!child.isGuardian(parent.getId())) {
+        if (!guardianAccessService.isGuardian(child, parent.getId())) {
             throw new ForbiddenOperationException("Not a guardian of this child");
         }
         if (!child.getSchoolId().equals(trip.getSchoolId())) {
@@ -102,7 +105,7 @@ public class ChildTripEventService {
         ParentProfile parent = parentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ForbiddenOperationException("No parent profile for current user"));
         Child child = childRepository.findById(childId).orElseThrow(() -> ResourceNotFoundException.of("Child", childId));
-        if (!child.isGuardian(parent.getId())) {
+        if (!guardianAccessService.isGuardian(child, parent.getId())) {
             throw new ForbiddenOperationException("Not a guardian of this child");
         }
         Instant fromInstant = from.atStartOfDay(java.time.ZoneOffset.UTC).toInstant();

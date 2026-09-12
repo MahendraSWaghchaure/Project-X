@@ -5,6 +5,7 @@ import com.projectx.notification.service.NotificationDispatchService;
 import com.projectx.people.domain.Child;
 import com.projectx.people.repo.ChildRepository;
 import com.projectx.people.repo.ParentProfileRepository;
+import com.projectx.people.service.GuardianAccessService;
 import com.projectx.school.repo.SchoolAdminProfileRepository;
 import java.util.List;
 import org.springframework.stereotype.Component;
@@ -21,14 +22,17 @@ public class GeofenceEventListener {
     private final NotificationDispatchService dispatchService;
     private final ChildRepository childRepository;
     private final ParentProfileRepository parentProfileRepository;
+    private final GuardianAccessService guardianAccessService;
     private final SchoolAdminProfileRepository schoolAdminProfileRepository;
 
     public GeofenceEventListener(NotificationDispatchService dispatchService, ChildRepository childRepository,
                                   ParentProfileRepository parentProfileRepository,
+                                  GuardianAccessService guardianAccessService,
                                   SchoolAdminProfileRepository schoolAdminProfileRepository) {
         this.dispatchService = dispatchService;
         this.childRepository = childRepository;
         this.parentProfileRepository = parentProfileRepository;
+        this.guardianAccessService = guardianAccessService;
         this.schoolAdminProfileRepository = schoolAdminProfileRepository;
     }
 
@@ -59,10 +63,7 @@ public class GeofenceEventListener {
         }
         String subject = subjectFor(event);
         String body = subject + " (" + child.getFirstName() + " " + child.getLastName() + ")";
-        dispatchToParentAccount(child.getPrimaryParentId(), event, subject, body);
-        if (child.getSecondaryParentId() != null) {
-            dispatchToParentAccount(child.getSecondaryParentId(), event, subject, body);
-        }
+        guardianAccessService.allGuardianIds(child).forEach(parentId -> dispatchToParentAccount(parentId, event, subject, body));
     }
 
     private void dispatchToParentAccount(Long parentProfileId, GeofenceRaisedEvent event, String subject, String body) {

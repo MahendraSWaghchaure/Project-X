@@ -49,7 +49,7 @@ public class ParentService {
 
     /**
      * Same provisioning as inviteParent, without the school-admin access gate - for callers who've
-     * already done their own authorization (e.g. ChildService.inviteSecondGuardian checks the
+     * already done their own authorization (e.g. ChildService.inviteGuardian checks the
      * caller is a guardian of the specific child, which is the correct check there, not
      * "is a school admin for this school").
      */

@@ -5,6 +5,7 @@ import com.projectx.notification.service.NotificationDispatchService;
 import com.projectx.people.domain.Child;
 import com.projectx.people.repo.ChildRepository;
 import com.projectx.people.repo.ParentProfileRepository;
+import com.projectx.people.service.GuardianAccessService;
 import com.projectx.school.repo.SchoolAdminProfileRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -22,14 +23,17 @@ public class SosEventListener {
     private final NotificationDispatchService dispatchService;
     private final ChildRepository childRepository;
     private final ParentProfileRepository parentProfileRepository;
+    private final GuardianAccessService guardianAccessService;
     private final SchoolAdminProfileRepository schoolAdminProfileRepository;
 
     public SosEventListener(NotificationDispatchService dispatchService, ChildRepository childRepository,
                              ParentProfileRepository parentProfileRepository,
+                             GuardianAccessService guardianAccessService,
                              SchoolAdminProfileRepository schoolAdminProfileRepository) {
         this.dispatchService = dispatchService;
         this.childRepository = childRepository;
         this.parentProfileRepository = parentProfileRepository;
+        this.guardianAccessService = guardianAccessService;
         this.schoolAdminProfileRepository = schoolAdminProfileRepository;
     }
 
@@ -39,10 +43,7 @@ public class SosEventListener {
         for (Child child : childRepository.findByRouteId(event.routeId())) {
             String body = subject + " (" + child.getFirstName() + " " + child.getLastName() + ")"
                     + (event.note() != null && !event.note().isBlank() ? " - " + event.note() : "");
-            dispatchToParent(child.getPrimaryParentId(), subject, body);
-            if (child.getSecondaryParentId() != null) {
-                dispatchToParent(child.getSecondaryParentId(), subject, body);
-            }
+            guardianAccessService.allGuardianIds(child).forEach(parentId -> dispatchToParent(parentId, subject, body));
         }
 
         String adminBody = "SOS triggered on trip #" + event.tripId()

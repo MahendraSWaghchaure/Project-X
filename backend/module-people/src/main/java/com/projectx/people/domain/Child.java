@@ -23,11 +23,9 @@ public class Child extends Auditable {
     @Column(name = "school_id", nullable = false)
     private Long schoolId;
 
+    /** The one guardian route auto-allocation and fee-invoice billing key off - see GuardianAccessService for the full (unlimited) guardian list, which is this field plus any child_guardians rows. */
     @Column(name = "primary_parent_id", nullable = false)
     private Long primaryParentId;
-
-    @Column(name = "secondary_parent_id")
-    private Long secondaryParentId;
 
     @Column(name = "first_name", nullable = false)
     private String firstName;
@@ -90,14 +88,6 @@ public class Child extends Auditable {
 
     public Long getPrimaryParentId() {
         return primaryParentId;
-    }
-
-    public Long getSecondaryParentId() {
-        return secondaryParentId;
-    }
-
-    public void setSecondaryParentId(Long secondaryParentId) {
-        this.secondaryParentId = secondaryParentId;
     }
 
     public String getFirstName() {
@@ -176,9 +166,5 @@ public class Child extends Auditable {
 
     public void setStatus(ChildStatus status) {
         this.status = status;
-    }
-
-    public boolean isGuardian(Long parentProfileId) {
-        return primaryParentId.equals(parentProfileId) || parentProfileId.equals(secondaryParentId);
     }
 }

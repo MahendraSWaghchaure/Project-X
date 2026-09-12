@@ -11,6 +11,7 @@ import com.projectx.people.domain.Child;
 import com.projectx.people.domain.ParentProfile;
 import com.projectx.people.repo.ChildRepository;
 import com.projectx.people.repo.ParentProfileRepository;
+import com.projectx.people.service.GuardianAccessService;
 import com.projectx.payment.domain.FeeInvoice;
 import com.projectx.payment.domain.Payment;
 import com.projectx.payment.domain.PaymentMode;
@@ -46,18 +47,20 @@ public class PaymentService {
     private final ParentProfileRepository parentProfileRepository;
     private final ChildRepository childRepository;
     private final RazorpayOrderService razorpayOrderService;
+    private final GuardianAccessService guardianAccessService;
     private final ApplicationEventPublisher eventPublisher;
 
     public PaymentService(PaymentRepository paymentRepository, FeeInvoiceRepository feeInvoiceRepository,
                            FeeInvoiceService feeInvoiceService, ParentProfileRepository parentProfileRepository,
                            ChildRepository childRepository, RazorpayOrderService razorpayOrderService,
-                           ApplicationEventPublisher eventPublisher) {
+                           GuardianAccessService guardianAccessService, ApplicationEventPublisher eventPublisher) {
         this.paymentRepository = paymentRepository;
         this.feeInvoiceRepository = feeInvoiceRepository;
         this.feeInvoiceService = feeInvoiceService;
         this.parentProfileRepository = parentProfileRepository;
         this.childRepository = childRepository;
         this.razorpayOrderService = razorpayOrderService;
+        this.guardianAccessService = guardianAccessService;
         this.eventPublisher = eventPublisher;
     }
 
@@ -69,7 +72,12 @@ public class PaymentService {
             throw new ResourceNotFoundException("One or more invoices not found");
         }
         for (FeeInvoice invoice : invoices) {
-            if (!invoice.getParentId().equals(parent.getId())) {
+            // Any guardian of the invoice's child can pay it, not just whichever guardian happened
+            // to be billed originally - a co-guardian paying on the primary's behalf is the normal
+            // case this is meant to allow, not an edge case to guard against.
+            Child child = childRepository.findById(invoice.getChildId())
+                    .orElseThrow(() -> ResourceNotFoundException.of("Child", invoice.getChildId()));
+            if (!guardianAccessService.isGuardian(child, parent.getId())) {
                 throw new ForbiddenOperationException("Not your invoice");
             }
             if (invoice.isSettled()) {
@@ -85,8 +93,7 @@ public class PaymentService {
         ParentProfile parent = currentParent();
         Child child = childRepository.findById(request.childId())
                 .orElseThrow(() -> ResourceNotFoundException.of("Child", request.childId()));
-        boolean isParentsChild = parent.getId().equals(child.getPrimaryParentId()) || parent.getId().equals(child.getSecondaryParentId());
-        if (!isParentsChild) {
+        if (!guardianAccessService.isGuardian(child, parent.getId())) {
             throw new ForbiddenOperationException("Not your child");
         }
 

@@ -8,6 +8,7 @@ import com.projectx.people.domain.ParentProfile;
 import com.projectx.people.repo.ChildRepository;
 import com.projectx.people.repo.DriverProfileRepository;
 import com.projectx.people.repo.ParentProfileRepository;
+import com.projectx.people.service.GuardianAccessService;
 import com.projectx.school.domain.Route;
 import com.projectx.school.repo.RouteRepository;
 import com.projectx.tracking.domain.Trip;
@@ -30,15 +31,17 @@ public class TripService {
     private final DriverProfileRepository driverProfileRepository;
     private final ChildRepository childRepository;
     private final ParentProfileRepository parentProfileRepository;
+    private final GuardianAccessService guardianAccessService;
 
     public TripService(TripRepository tripRepository, RouteRepository routeRepository,
                         DriverProfileRepository driverProfileRepository, ChildRepository childRepository,
-                        ParentProfileRepository parentProfileRepository) {
+                        ParentProfileRepository parentProfileRepository, GuardianAccessService guardianAccessService) {
         this.tripRepository = tripRepository;
         this.routeRepository = routeRepository;
         this.driverProfileRepository = driverProfileRepository;
         this.childRepository = childRepository;
         this.parentProfileRepository = parentProfileRepository;
+        this.guardianAccessService = guardianAccessService;
     }
 
     public TripResponse scheduleTrip(Long schoolId, CreateTripRequest request) {
@@ -101,7 +104,7 @@ public class TripService {
         ParentProfile parent = parentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ForbiddenOperationException("No parent profile for current user"));
         Child child = childRepository.findById(childId).orElseThrow(() -> ResourceNotFoundException.of("Child", childId));
-        if (!child.isGuardian(parent.getId())) {
+        if (!guardianAccessService.isGuardian(child, parent.getId())) {
             throw new ForbiddenOperationException("Not a guardian of this child");
         }
         if (child.getRouteId() == null) {
