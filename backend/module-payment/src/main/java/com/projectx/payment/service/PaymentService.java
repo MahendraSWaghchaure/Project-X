@@ -185,9 +185,10 @@ public class PaymentService {
     }
 
     @Transactional(readOnly = true)
-    public List<PaymentResponse> listForSchool(Long schoolId) {
+    public PageResponse<PaymentResponse> listForSchool(Long schoolId, Pageable pageable) {
         CurrentUserContext.requireSchoolAccess(schoolId);
-        return paymentRepository.findBySchoolIdOrderByCreatedAtDesc(schoolId).stream().map(PaymentResponse::from).toList();
+        return PageResponse.from(
+                paymentRepository.findBySchoolIdOrderByCreatedAtDesc(schoolId, pageable).map(PaymentResponse::from));
     }
 
     private ParentProfile currentParent() {

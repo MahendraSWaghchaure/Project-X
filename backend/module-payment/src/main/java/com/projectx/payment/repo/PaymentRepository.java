@@ -16,10 +16,13 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     List<Payment> findByParentIdOrderByCreatedAtDesc(Long parentId);
 
-    /** Paginated variant for the parent-facing payment-history page. listForSchool below still feeds the school-admin Payments page's own full listing/browse table - a separate, still-legitimate unbounded use from the dashboard's revenue figure, which now comes from the indexed sum query below instead of summing this list client-side. */
+    /** Paginated variant for the parent-facing payment-history page. */
     Page<Payment> findByParentIdOrderByCreatedAtDesc(Long parentId, Pageable pageable);
 
     List<Payment> findBySchoolIdOrderByCreatedAtDesc(Long schoolId);
+
+    /** Paginated variant for the school-admin Payments page's browsing table - the dashboard's revenue figure comes from the indexed sum query below instead of summing this list client-side, so nothing else needs the unbounded overload above anymore. */
+    Page<Payment> findBySchoolIdOrderByCreatedAtDesc(Long schoolId, Pageable pageable);
 
     Optional<Payment> findByRazorpayOrderId(String razorpayOrderId);
 

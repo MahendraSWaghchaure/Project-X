@@ -4,6 +4,7 @@ import com.projectx.common.exception.ForbiddenOperationException;
 import com.projectx.common.exception.ResourceNotFoundException;
 import com.projectx.common.security.CurrentUser;
 import com.projectx.common.security.CurrentUserContext;
+import com.projectx.common.web.PageResponse;
 import com.projectx.people.domain.Child;
 import com.projectx.people.domain.ChildStatus;
 import com.projectx.people.domain.ParentProfile;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -154,10 +156,10 @@ public class FeeInvoiceService {
     }
 
     @Transactional(readOnly = true)
-    public List<FeeInvoiceResponse> listForSchool(Long schoolId) {
+    public PageResponse<FeeInvoiceResponse> listForSchool(Long schoolId, Pageable pageable) {
         CurrentUserContext.requireSchoolAccess(schoolId);
-        return feeInvoiceRepository.findBySchoolIdOrderByBillingMonthDesc(schoolId).stream()
-                .map(FeeInvoiceResponse::from).toList();
+        return PageResponse.from(
+                feeInvoiceRepository.findBySchoolIdOrderByBillingMonthDesc(schoolId, pageable).map(FeeInvoiceResponse::from));
     }
 
     private ParentProfile currentParent() {

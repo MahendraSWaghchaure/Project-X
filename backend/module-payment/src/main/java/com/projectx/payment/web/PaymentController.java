@@ -9,7 +9,6 @@ import com.projectx.payment.dto.PaymentResponse;
 import com.projectx.payment.dto.VerifyPaymentRequest;
 import com.projectx.payment.service.PaymentService;
 import jakarta.validation.Valid;
-import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -65,7 +64,8 @@ public class PaymentController {
 
     @GetMapping("/schools/{schoolId}/payments")
     @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SCHOOL_ADMIN')")
-    public ApiResponse<List<PaymentResponse>> listForSchool(@PathVariable Long schoolId) {
-        return ApiResponse.ok(paymentService.listForSchool(schoolId));
+    public ApiResponse<PageResponse<PaymentResponse>> listForSchool(@PathVariable Long schoolId,
+            @PageableDefault(size = 30) Pageable pageable) {
+        return ApiResponse.ok(paymentService.listForSchool(schoolId, pageable));
     }
 }
