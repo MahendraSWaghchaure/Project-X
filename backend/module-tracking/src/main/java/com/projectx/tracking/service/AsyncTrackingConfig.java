@@ -1,5 +1,6 @@
 package com.projectx.tracking.service;
 
+import com.projectx.common.trace.MdcTaskDecorator;
 import java.util.concurrent.Executor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +23,7 @@ public class AsyncTrackingConfig {
         executor.setMaxPoolSize(32);
         executor.setQueueCapacity(2000);
         executor.setThreadNamePrefix("tracking-");
+        executor.setTaskDecorator(new MdcTaskDecorator());
         executor.initialize();
         return executor;
     }

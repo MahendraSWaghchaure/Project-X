@@ -1,5 +1,6 @@
 package com.projectx.notification.config;
 
+import com.projectx.common.trace.MdcTaskDecorator;
 import java.util.concurrent.Executor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,6 +26,7 @@ public class AsyncNotificationConfig implements AsyncConfigurer {
         executor.setMaxPoolSize(16);
         executor.setQueueCapacity(500);
         executor.setThreadNamePrefix("notify-");
+        executor.setTaskDecorator(new MdcTaskDecorator());
         executor.initialize();
         return executor;
     }

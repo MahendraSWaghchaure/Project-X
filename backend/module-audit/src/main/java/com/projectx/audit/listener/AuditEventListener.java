@@ -33,6 +33,7 @@ public class AuditEventListener {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onAuditEvent(AuditEvent event) {
         auditLogRepository.save(new AuditLogEntry(event.actorUserId(), event.actorEmail(), event.actorRole(),
-                event.action(), event.entityType(), event.entityId(), event.schoolId(), event.detail(), event.occurredAt()));
+                event.action(), event.entityType(), event.entityId(), event.schoolId(), event.detail(),
+                event.occurredAt(), event.traceId()));
     }
 }

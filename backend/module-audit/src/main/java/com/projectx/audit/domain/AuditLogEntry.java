@@ -44,11 +44,15 @@ public class AuditLogEntry {
     @Column(name = "occurred_at", nullable = false)
     private Instant occurredAt;
 
+    /** The HTTP request's trace id (see common.trace.TraceIdFilter) - correlates this row back to every log line written while handling that request. Nullable: a handful of audit-worthy actions today don't run inside an HTTP request (e.g. a scheduled job), so there's no trace id to capture. */
+    @Column(name = "trace_id", length = 64)
+    private String traceId;
+
     protected AuditLogEntry() {
     }
 
     public AuditLogEntry(Long actorUserId, String actorEmail, String actorRole, String action, String entityType,
-                          Long entityId, Long schoolId, String detail, Instant occurredAt) {
+                          Long entityId, Long schoolId, String detail, Instant occurredAt, String traceId) {
         this.actorUserId = actorUserId;
         this.actorEmail = actorEmail;
         this.actorRole = actorRole;
@@ -58,6 +62,7 @@ public class AuditLogEntry {
         this.schoolId = schoolId;
         this.detail = detail;
         this.occurredAt = occurredAt;
+        this.traceId = traceId;
     }
 
     public Long getId() {
@@ -98,5 +103,9 @@ public class AuditLogEntry {
 
     public Instant getOccurredAt() {
         return occurredAt;
+    }
+
+    public String getTraceId() {
+        return traceId;
     }
 }

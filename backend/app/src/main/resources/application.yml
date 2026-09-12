@@ -77,6 +77,15 @@ server:
       max: ${TOMCAT_MAX_THREADS:100}
       min-spare: ${TOMCAT_MIN_SPARE_THREADS:10}
 
+logging:
+  pattern:
+    # Appends the request trace id (see common.trace.TraceIdFilter) right after the log level in
+    # Spring Boot's default console pattern - "%5p [<traceId>]" - so every line written while
+    # handling a request, including from the async executors (MdcTaskDecorator propagates it),
+    # can be grepped by the exact id returned in that request's X-Request-Id response header.
+    # "-" when there's no trace id (e.g. a scheduled job's own log lines, outside any request).
+    level: "%5p [%X{traceId:-}]"
+
 management:
   endpoints:
     web:

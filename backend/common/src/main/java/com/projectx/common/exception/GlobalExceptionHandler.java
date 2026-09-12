@@ -1,10 +1,12 @@
 package com.projectx.common.exception;
 
+import com.projectx.common.trace.TraceIds;
 import com.projectx.common.web.ApiError;
 import com.projectx.common.web.ApiResponse;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -58,7 +60,7 @@ public class GlobalExceptionHandler {
         List<ApiError.FieldError> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
                 .map(fe -> new ApiError.FieldError(fe.getField(), fe.getDefaultMessage()))
                 .toList();
-        ApiError error = new ApiError("VALIDATION_ERROR", "Request failed validation", fieldErrors);
+        ApiError error = new ApiError("VALIDATION_ERROR", "Request failed validation", fieldErrors, MDC.get(TraceIds.MDC_KEY));
         return ResponseEntity.badRequest().body(ApiResponse.error(error));
     }
 
