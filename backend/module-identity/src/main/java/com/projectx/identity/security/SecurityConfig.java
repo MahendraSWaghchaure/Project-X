@@ -1,5 +1,6 @@
 package com.projectx.identity.security;
 
+import com.projectx.common.trace.TraceIds;
 import java.util.List;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -11,6 +12,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -41,7 +43,8 @@ public class SecurityConfig {
                                             RestAuthenticationEntryPoint authenticationEntryPoint,
                                             RestAccessDeniedHandler accessDeniedHandler,
                                             CorsConfigurationSource corsConfigurationSource,
-                                            RateLimitFilter rateLimitFilter) throws Exception {
+                                            RateLimitFilter rateLimitFilter,
+                                            IdentityHeadersFilter identityHeadersFilter) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
@@ -62,6 +65,10 @@ public class SecurityConfig {
                         .contentSecurityPolicy(csp -> csp.policyDirectives(
                                 "default-src 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'")))
                 .addFilterAfter(rateLimitFilter, CorsFilter.class)
+                // Must run AFTER BearerTokenAuthenticationFilter (the actual filter class backing
+                // oauth2ResourceServer below) - it reads SecurityContextHolder, which that filter is
+                // what populates in the first place. Any earlier and there's nothing to read yet.
+                .addFilterAfter(identityHeadersFilter, BearerTokenAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .anyRequest().authenticated())
@@ -79,11 +86,24 @@ public class SecurityConfig {
     }
 
     @Bean
+    public IdentityHeadersFilter identityHeadersFilter() {
+        return new IdentityHeadersFilter();
+    }
+
+    @Bean
     public CorsConfigurationSource corsConfigurationSource(CorsProperties corsProperties) {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(corsProperties.getAllowedOrigins());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        // Without this, a browser can't read these response headers via fetch/axios at all in
+        // production (a real cross-origin frontend/backend split) - the CORS spec only exposes a
+        // small fixed "simple response header" allowlist to page JS by default, and none of these
+        // are on it. Dev doesn't hit this (Vite's proxy makes requests same-origin), which is
+        // exactly the kind of gap that only shows up after deploying.
+        configuration.setExposedHeaders(List.of(
+                TraceIds.HEADER, IdentityHeadersFilter.USER_ID_HEADER,
+                IdentityHeadersFilter.TENANT_ID_HEADER, IdentityHeadersFilter.WORKSPACE_ID_HEADER));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
