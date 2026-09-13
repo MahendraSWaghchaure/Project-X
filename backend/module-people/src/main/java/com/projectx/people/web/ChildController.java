@@ -11,6 +11,7 @@ import com.projectx.people.dto.InviteParentResponse;
 import com.projectx.people.dto.LinkInsurancePolicyRequest;
 import com.projectx.people.dto.UpdateChildRequest;
 import com.projectx.people.service.ChildService;
+import com.projectx.school.dto.RouteResponse;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
@@ -75,6 +76,12 @@ public class ChildController {
     @PreAuthorize("hasRole('PARENT')")
     public ApiResponse<ChildDriverResponse> getMyChildDriver(@PathVariable Long childId) {
         return ApiResponse.ok(childService.getMyChildDriver(childId));
+    }
+
+    @GetMapping("/parents/me/children/{childId}/route")
+    @PreAuthorize("hasRole('PARENT')")
+    public ApiResponse<RouteResponse> getMyChildRoute(@PathVariable Long childId) {
+        return ApiResponse.ok(childService.getMyChildRoute(childId));
     }
 
     @GetMapping("/parents/me/children/{childId}/qr-token")

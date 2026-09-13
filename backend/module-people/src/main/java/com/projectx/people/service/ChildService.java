@@ -23,6 +23,8 @@ import com.projectx.people.repo.ParentProfileRepository;
 import com.projectx.school.domain.Route;
 import com.projectx.school.domain.RouteStop;
 import com.projectx.school.domain.School;
+import com.projectx.school.dto.RouteResponse;
+import com.projectx.school.dto.RouteStopResponse;
 import com.projectx.school.repo.RouteRepository;
 import com.projectx.school.repo.RouteStopRepository;
 import com.projectx.school.repo.SchoolRepository;
@@ -208,6 +210,24 @@ public class ChildService {
         DriverProfile driver = driverProfileRepository.findByVehicleId(route.getVehicleId())
                 .orElseThrow(() -> new ResourceNotFoundException("No driver assigned to this child's vehicle yet"));
         return ChildDriverResponse.from(driver);
+    }
+
+    /** The assigned route's stops, for drawing the child's route path on the parent's live-tracking map. */
+    @Transactional(readOnly = true)
+    public RouteResponse getMyChildRoute(Long childId) {
+        ParentProfile parent = parentService.findByUserIdOrThrow(CurrentUserContext.get().userId());
+        Child child = childRepository.findById(childId).orElseThrow(() -> ResourceNotFoundException.of("Child", childId));
+        if (!guardianAccessService.isGuardian(child, parent.getId())) {
+            throw new ForbiddenOperationException("Not a guardian of this child");
+        }
+        if (child.getRouteId() == null) {
+            throw new ResourceNotFoundException("This child has not been assigned a route yet");
+        }
+        Route route = routeRepository.findById(child.getRouteId())
+                .orElseThrow(() -> ResourceNotFoundException.of("Route", child.getRouteId()));
+        List<RouteStopResponse> stops = routeStopRepository.findByRouteIdOrderBySequenceNumberAsc(route.getId())
+                .stream().map(RouteStopResponse::from).toList();
+        return RouteResponse.from(route, stops);
     }
 
     /** The stable QR token a parent can display for the driver to scan instead of a manual boarding tap. */
