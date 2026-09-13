@@ -50,7 +50,7 @@ class SosAbsenceAndQrScanTest extends IntegrationTestBase {
 
         String schoolAdminEmail = unique("schooladmin") + "@test.example";
         var createSchoolRequest = new CreateSchoolRequest(unique("Sos School "), "1 Test Rd", "Pune", null, null,
-                null, null, 18.5204, 73.8567, 300, null, "Admin", "User", schoolAdminEmail, "password123");
+                null, null, null, 18.5204, 73.8567, 300, null, "Admin", "User", schoolAdminEmail, "password123");
         ResponseEntity<ApiResponse<SchoolResponse>> schoolResponse = exchange(
                 "/schools", HttpMethod.POST, createSchoolRequest, platformToken, new ParameterizedTypeReference<>() {});
         assertSuccess(schoolResponse);

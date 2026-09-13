@@ -37,7 +37,7 @@ class OptimisticLockingConcurrencyTest extends IntegrationTestBase {
         String platformToken = platformAdminToken();
 
         var createRequest = new CreateSchoolRequest(unique("Concurrency School "), "1 Test Rd", "Pune", null, null,
-                null, null, null, null, null, null, "Admin", "User", unique("schooladmin") + "@test.example", "password123");
+                null, null, null, null, null, null, null, "Admin", "User", unique("schooladmin") + "@test.example", "password123");
         ResponseEntity<ApiResponse<SchoolResponse>> createResponse = exchange(
                 "/schools", HttpMethod.POST, createRequest, platformToken, new ParameterizedTypeReference<>() {});
         assertSuccess(createResponse);
@@ -54,7 +54,7 @@ class OptimisticLockingConcurrencyTest extends IntegrationTestBase {
                 ready.countDown();
                 go.await();
                 var updateRequest = new UpdateSchoolRequest(attemptedName, "1 Test Rd", "Pune", null, null, null,
-                        null, null, null, null, null);
+                        null, null, null, null, null, null);
                 ResponseEntity<ApiResponse<SchoolResponse>> response = exchange(
                         "/schools/" + schoolId, HttpMethod.PATCH, updateRequest, platformToken, new ParameterizedTypeReference<ApiResponse<SchoolResponse>>() {});
                 return response.getStatusCode();

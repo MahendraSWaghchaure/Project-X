@@ -22,7 +22,7 @@ class SchoolLifecycleTest extends IntegrationTestBase {
         String adminEmail = unique(namePrefix.toLowerCase()) + "@test.example";
         String adminPassword = "password123";
         var request = new CreateSchoolRequest(namePrefix, "1 Test Rd", "Pune", null, null, null, null,
-                null, null, null, null, "Admin", "User", adminEmail, adminPassword);
+                null, null, null, null, null, "Admin", "User", adminEmail, adminPassword);
         ResponseEntity<ApiResponse<SchoolResponse>> response = exchange(
                 "/schools", HttpMethod.POST, request, platformToken, new ParameterizedTypeReference<>() {});
         assertSuccess(response);
@@ -35,7 +35,7 @@ class SchoolLifecycleTest extends IntegrationTestBase {
         SchoolResponse school = createSchool(platformToken, unique("EditMe")).school();
         assertThat(school.status()).isEqualTo(SchoolStatus.ACTIVE);
 
-        var updateRequest = new UpdateSchoolRequest("Renamed School", "2 New Rd", "Mumbai", "MH", "400001",
+        var updateRequest = new UpdateSchoolRequest("Renamed School", "2 New Rd", "Mumbai", "MH", "400001", null,
                 "9999999999", "contact@school.example", null, null, null, null);
         ResponseEntity<ApiResponse<SchoolResponse>> updateResponse = exchange(
                 "/schools/" + school.id(), HttpMethod.PATCH, updateRequest, platformToken,

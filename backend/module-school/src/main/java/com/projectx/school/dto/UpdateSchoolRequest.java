@@ -15,6 +15,7 @@ public record UpdateSchoolRequest(
         @NotBlank String city,
         String state,
         String pincode,
+        Long districtId,
         @Pattern(regexp = Patterns.PHONE, message = Patterns.PHONE_MESSAGE) String contactPhone,
         @Email String contactEmail,
         @DecimalMin("-90") @DecimalMax("90") Double latitude,

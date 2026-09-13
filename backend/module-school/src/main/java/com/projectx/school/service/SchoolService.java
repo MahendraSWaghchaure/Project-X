@@ -50,6 +50,7 @@ public class SchoolService {
             school.setGeofenceRadiusMeters(request.geofenceRadiusMeters());
         }
         school.setDismissalTime(request.dismissalTime());
+        school.setDistrictId(request.districtId());
         school = schoolRepository.save(school);
 
         UserAccount admin = userProvisioningService.provision(
@@ -61,8 +62,11 @@ public class SchoolService {
     }
 
     @Transactional(readOnly = true)
-    public List<SchoolResponse> listSchools() {
-        return schoolRepository.findAll().stream().map(SchoolResponse::from).toList();
+    public List<SchoolResponse> listSchools(List<Long> districtIds) {
+        List<School> schools = (districtIds != null && !districtIds.isEmpty())
+                ? schoolRepository.findByDistrictIdIn(districtIds)
+                : schoolRepository.findAll();
+        return schools.stream().map(SchoolResponse::from).toList();
     }
 
     @Transactional(readOnly = true)
@@ -85,6 +89,7 @@ public class SchoolService {
             school.setGeofenceRadiusMeters(request.geofenceRadiusMeters());
         }
         school.setDismissalTime(request.dismissalTime());
+        school.setDistrictId(request.districtId());
         eventPublisher.publishEvent(new SchoolLocationChangedEvent(schoolId));
         return SchoolResponse.from(school);
     }

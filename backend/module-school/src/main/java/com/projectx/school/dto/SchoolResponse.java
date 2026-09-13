@@ -6,7 +6,7 @@ import com.projectx.school.domain.SchoolStatus;
 import java.time.LocalTime;
 
 public record SchoolResponse(
-        Long id, String name, String address, String city, String state, String pincode,
+        Long id, String name, String address, String city, String state, String pincode, Long districtId,
         String contactPhone, String contactEmail, GeoPoint location, int geofenceRadiusMeters,
         LocalTime dismissalTime, SchoolStatus status) {
 
@@ -15,7 +15,8 @@ public record SchoolResponse(
                 ? com.projectx.common.geo.GeoPoints.toGeoPoint(school.getLocation())
                 : null;
         return new SchoolResponse(school.getId(), school.getName(), school.getAddress(), school.getCity(),
-                school.getState(), school.getPincode(), school.getContactPhone(), school.getContactEmail(),
-                location, school.getGeofenceRadiusMeters(), school.getDismissalTime(), school.getStatus());
+                school.getState(), school.getPincode(), school.getDistrictId(), school.getContactPhone(),
+                school.getContactEmail(), location, school.getGeofenceRadiusMeters(), school.getDismissalTime(),
+                school.getStatus());
     }
 }

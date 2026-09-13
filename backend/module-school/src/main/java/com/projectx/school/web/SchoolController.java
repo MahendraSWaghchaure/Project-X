@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,8 +39,8 @@ public class SchoolController {
 
     @GetMapping
     @PreAuthorize("hasRole('PLATFORM_ADMIN')")
-    public ApiResponse<List<SchoolResponse>> listSchools() {
-        return ApiResponse.ok(schoolService.listSchools());
+    public ApiResponse<List<SchoolResponse>> listSchools(@RequestParam(required = false) List<Long> districtIds) {
+        return ApiResponse.ok(schoolService.listSchools(districtIds));
     }
 
     @GetMapping("/{schoolId}")

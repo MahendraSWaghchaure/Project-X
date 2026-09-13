@@ -38,6 +38,17 @@ public class School extends Auditable {
     private String state;
     private String pincode;
 
+    /**
+     * Optional structured link into module-geo's reference data (country/state/region/district),
+     * additive alongside the free-text city/state/pincode above rather than replacing them - a
+     * school onboarded before this existed simply has this null, and city/state keep working
+     * exactly as before. Cross-module id reference, no FK constraint - same convention as routeId/
+     * insurancePolicyId elsewhere in this codebase, since module-school doesn't depend on
+     * module-geo (only app composes both).
+     */
+    @Column(name = "district_id")
+    private Long districtId;
+
     @Column(name = "contact_phone")
     private String contactPhone;
 
@@ -95,6 +106,14 @@ public class School extends Auditable {
 
     public String getPincode() {
         return pincode;
+    }
+
+    public Long getDistrictId() {
+        return districtId;
+    }
+
+    public void setDistrictId(Long districtId) {
+        this.districtId = districtId;
     }
 
     public String getContactPhone() {

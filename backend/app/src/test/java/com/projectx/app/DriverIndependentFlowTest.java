@@ -21,7 +21,7 @@ class DriverIndependentFlowTest extends IntegrationTestBase {
     private CreatedSchool createSchool(String platformToken) {
         String adminEmail = unique("schooladmin") + "@test.example";
         var request = new CreateSchoolRequest(unique("Test School "), "1 Test Rd", "Pune", null, null, null, null,
-                null, null, null, null, "Admin", "User", adminEmail, "password123");
+                null, null, null, null, null, "Admin", "User", adminEmail, "password123");
         ResponseEntity<ApiResponse<SchoolResponse>> response = exchange(
                 "/schools", HttpMethod.POST, request, platformToken, new ParameterizedTypeReference<>() {});
         assertSuccess(response);
