@@ -204,11 +204,11 @@ public class ChildService {
         }
         Route route = routeRepository.findById(child.getRouteId())
                 .orElseThrow(() -> ResourceNotFoundException.of("Route", child.getRouteId()));
-        if (route.getVehicleId() == null) {
-            throw new ResourceNotFoundException("This child's route has no vehicle assigned yet");
+        if (route.getDriverId() == null) {
+            throw new ResourceNotFoundException("This child's route has no driver assigned yet");
         }
-        DriverProfile driver = driverProfileRepository.findByVehicleId(route.getVehicleId())
-                .orElseThrow(() -> new ResourceNotFoundException("No driver assigned to this child's vehicle yet"));
+        DriverProfile driver = driverProfileRepository.findById(route.getDriverId())
+                .orElseThrow(() -> ResourceNotFoundException.of("Driver", route.getDriverId()));
         return ChildDriverResponse.from(driver);
     }
 
