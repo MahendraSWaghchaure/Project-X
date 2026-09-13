@@ -62,6 +62,13 @@ public class GeoService {
                 .toList();
     }
 
+    /** Resolves a single district's full ancestor chain - used to prefill a cascading picker from an already-stored districtId. */
+    public DistrictResponse getDistrict(Long districtId) {
+        District district = districtRepository.findById(districtId)
+                .orElseThrow(() -> ResourceNotFoundException.of("District", districtId));
+        return toDistrictResponse(district);
+    }
+
     private DistrictResponse toDistrictResponse(District district) {
         State state = stateRepository.findById(district.getStateId())
                 .orElseThrow(() -> ResourceNotFoundException.of("State", district.getStateId()));
