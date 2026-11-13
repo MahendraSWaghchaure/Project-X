@@ -6,6 +6,7 @@ import com.projectx.payment.dto.UpsertBankDetailsRequest;
 import com.projectx.payment.service.DriverBankDetailService;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,5 +30,11 @@ public class DriverBankDetailController {
     @GetMapping("/drivers/me/bank-details")
     public ApiResponse<BankDetailResponse> getMine() {
         return ApiResponse.ok(bankDetailService.getMine());
+    }
+
+    @DeleteMapping("/drivers/me/bank-details")
+    public ApiResponse<Void> deleteMine() {
+        bankDetailService.deleteMine();
+        return ApiResponse.ok(null);
     }
 }

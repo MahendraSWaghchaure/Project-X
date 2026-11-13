@@ -28,7 +28,11 @@ public class StompRelaySubscriber implements MessageListener {
     public void onMessage(Message message, byte[] pattern) {
         try {
             StompRelayMessage relayMessage = objectMapper.readValue(message.getBody(), StompRelayMessage.class);
-            messagingTemplate.send(relayMessage.destination(), MessageBuilder.withPayload(relayMessage.payloadJson())
+            // byte[] on purpose: send(dest, Message) skips the message converter, and StompSubProtocolHandler drops
+            // (logs "Expected byte[] payload. Ignoring") any outbound MESSAGE whose payload is not already bytes -
+            // so a String payload here meant no relayed frame ever reached a client.
+            messagingTemplate.send(relayMessage.destination(), MessageBuilder.withPayload(
+                            relayMessage.payloadJson().getBytes(java.nio.charset.StandardCharsets.UTF_8))
                     .setHeader("contentType", MimeTypeUtils.APPLICATION_JSON)
                     .build());
         } catch (Exception e) {

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.projectx</groupId>
+        <artifactId>projectx-backend</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>module-hardware</artifactId>
+    <packaging>jar</packaging>
+    <name>ProjectX :: Hardware</name>
+    <description>Raw ingestion endpoints for hardware that doesn't exist yet (RFID/NFC gate readers, vehicle telemetry
+        boxes) - device-API-key authenticated (not the JWT stack), rate-limited, idempotent storage only. Deliberately
+        not wired into any safety-critical decision path (no Arrival creation, no attendance marking) - see
+        HardwareIngestController's class javadoc.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.projectx</groupId>
+            <artifactId>common</artifactId>
+        </dependency>
+        <!-- Device-key rate limiting, same atomic INCR+PEXPIRE pattern module-identity's
+             RateLimitFilter and module-tracking/module-attendance already use. Declared directly
+             here (not inherited) - same discipline every other Redis-using module follows, since
+             Spring Boot autoconfiguration of StringRedisTemplate is per-ApplicationContext, not
+             per-module, but the compile-time dependency still has to be declared where the type is
+             referenced. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

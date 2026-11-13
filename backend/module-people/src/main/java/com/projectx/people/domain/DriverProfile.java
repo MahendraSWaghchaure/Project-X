@@ -75,6 +75,16 @@ public class DriverProfile extends Auditable {
     @Column(name = "verified_by_user_id")
     private Long verifiedByUserId;
 
+    @Column(name = "address", length = 500)
+    private String address;
+
+    /** Why the employment status is SUSPENDED/TERMINATED (null otherwise). */
+    @Column(name = "status_reason", length = 500)
+    private String statusReason;
+
+    @Column(name = "status_changed_at")
+    private Instant statusChangedAt;
+
     protected DriverProfile() {
     }
 
@@ -162,6 +172,30 @@ public class DriverProfile extends Auditable {
 
     public void setEmploymentStatus(DriverEmploymentStatus employmentStatus) {
         this.employmentStatus = employmentStatus;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getStatusReason() {
+        return statusReason;
+    }
+
+    public Instant getStatusChangedAt() {
+        return statusChangedAt;
+    }
+
+    /** Changes employment status and records when and why; the reason is kept only for SUSPENDED/TERMINATED. */
+    public void changeEmploymentStatus(DriverEmploymentStatus status, String reason) {
+        this.employmentStatus = status;
+        boolean needsReason = status == DriverEmploymentStatus.SUSPENDED || status == DriverEmploymentStatus.TERMINATED;
+        this.statusReason = needsReason ? reason : null;
+        this.statusChangedAt = Instant.now();
     }
 
     public boolean isIndependent() {

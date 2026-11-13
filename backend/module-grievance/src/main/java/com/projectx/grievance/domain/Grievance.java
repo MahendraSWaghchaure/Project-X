@@ -63,6 +63,27 @@ public class Grievance extends Auditable {
     @Column(name = "resolved_at")
     private Instant resolvedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private GrievanceType type;
+
+    /** Free text, only meaningful (and required) when {@code type} is OTHER. */
+    @Column(name = "other_description", length = 500)
+    private String otherDescription;
+
+    @Column(name = "vehicle_id")
+    private Long vehicleId;
+
+    /** DriverProfile id (not the user id) of the driver the complaint is about. */
+    @Column(name = "driver_id")
+    private Long driverId;
+
+    @Column(name = "child_id")
+    private Long childId;
+
+    @Column(name = "trip_id")
+    private Long tripId;
+
     protected Grievance() {
     }
 
@@ -119,6 +140,42 @@ public class Grievance extends Auditable {
 
     public Long getResolvedByUserId() {
         return resolvedByUserId;
+    }
+
+    public GrievanceType getType() {
+        return type;
+    }
+
+    public String getOtherDescription() {
+        return otherDescription;
+    }
+
+    public Long getVehicleId() {
+        return vehicleId;
+    }
+
+    public Long getDriverId() {
+        return driverId;
+    }
+
+    public Long getChildId() {
+        return childId;
+    }
+
+    public Long getTripId() {
+        return tripId;
+    }
+
+    public void classify(GrievanceType type, String otherDescription) {
+        this.type = type;
+        this.otherDescription = otherDescription;
+    }
+
+    public void linkTo(Long vehicleId, Long driverId, Long childId, Long tripId) {
+        this.vehicleId = vehicleId;
+        this.driverId = driverId;
+        this.childId = childId;
+        this.tripId = tripId;
     }
 
     public Instant getResolvedAt() {

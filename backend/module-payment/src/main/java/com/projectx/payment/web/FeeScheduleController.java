@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SCHOOL_ADMIN')")
+@PreAuthorize("hasRole('PLATFORM_ADMIN')")
 public class FeeScheduleController {
 
     private final FeeScheduleService feeScheduleService;

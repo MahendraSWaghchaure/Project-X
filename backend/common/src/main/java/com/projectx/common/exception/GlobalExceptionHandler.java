@@ -39,6 +39,11 @@ public class GlobalExceptionHandler {
         return respond(HttpStatus.CONFLICT, "CONFLICT", ex.getMessage());
     }
 
+    @ExceptionHandler(GoneException.class)
+    public ResponseEntity<ApiResponse<Void>> handleGone(GoneException ex) {
+        return respond(HttpStatus.GONE, "GONE", ex.getMessage());
+    }
+
     @ExceptionHandler({ForbiddenOperationException.class, AccessDeniedException.class})
     public ResponseEntity<ApiResponse<Void>> handleForbidden(RuntimeException ex) {
         return respond(HttpStatus.FORBIDDEN, "FORBIDDEN", ex.getMessage());

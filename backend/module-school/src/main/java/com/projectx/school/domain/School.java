@@ -69,6 +69,13 @@ public class School extends Auditable {
     @Column(nullable = false, length = 16)
     private SchoolStatus status = SchoolStatus.ACTIVE;
 
+    /** Why the school is SUSPENDED (required when suspending; cleared on re-activation). */
+    @Column(name = "status_reason", length = 500)
+    private String statusReason;
+
+    @Column(name = "status_changed_at")
+    private java.time.Instant statusChangedAt;
+
     protected School() {
     }
 
@@ -165,5 +172,20 @@ public class School extends Auditable {
 
     public void setStatus(SchoolStatus status) {
         this.status = status;
+    }
+
+    public String getStatusReason() {
+        return statusReason;
+    }
+
+    public java.time.Instant getStatusChangedAt() {
+        return statusChangedAt;
+    }
+
+    /** The only way to change status: records when, and why (reason is kept only while SUSPENDED). */
+    public void changeStatus(SchoolStatus status, String reason) {
+        this.status = status;
+        this.statusReason = status == SchoolStatus.SUSPENDED ? reason : null;
+        this.statusChangedAt = java.time.Instant.now();
     }
 }

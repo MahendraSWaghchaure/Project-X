@@ -59,6 +59,6 @@ public class SchoolController {
     @PreAuthorize("hasRole('PLATFORM_ADMIN')")
     public ApiResponse<SchoolResponse> updateSchoolStatus(@PathVariable Long schoolId,
                                                             @Valid @RequestBody UpdateSchoolStatusRequest request) {
-        return ApiResponse.ok(schoolService.setSchoolStatus(schoolId, request.status()));
+        return ApiResponse.ok(schoolService.setSchoolStatus(schoolId, request.status(), request.reason()));
     }
 }

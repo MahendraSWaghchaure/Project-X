@@ -77,8 +77,8 @@ public class GeoService {
         Region region = district.getRegionId() != null ? regionRepository.findById(district.getRegionId()).orElse(null) : null;
 
         return new DistrictResponse(
-                district.getId(), district.getName(),
-                state.getId(), state.getName(),
+                district.getId(), district.getName(), district.getLatitude(), district.getLongitude(),
+                state.getId(), state.getName(), state.getLatitude(), state.getLongitude(),
                 region != null ? region.getId() : null, region != null ? region.getName() : null,
                 country.getId(), country.getName());
     }

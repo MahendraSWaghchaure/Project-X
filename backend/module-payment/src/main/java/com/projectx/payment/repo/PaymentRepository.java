@@ -26,6 +26,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     Optional<Payment> findByRazorpayOrderId(String razorpayOrderId);
 
+    /** PaymentReconciliationService's working set - every payment young enough to matter, newest first, status-independent (a stuck CREATED is exactly the kind of mismatch this exists to catch). */
+    List<Payment> findByCreatedAtAfterOrderByCreatedAtDesc(Instant after);
+
     long countByReceiptNumberIsNotNull();
 
     /** Powers the dashboard's "revenue this month" stat via an indexed DB-side sum, instead of fetching every payment row to add them up in application code. */

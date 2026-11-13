@@ -20,7 +20,12 @@ import com.projectx.people.dto.UpdateDriverRequest;
 import com.projectx.people.repo.DriverProfileRepository;
 import com.projectx.school.domain.Vehicle;
 import com.projectx.school.repo.VehicleRepository;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import java.util.Objects;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -29,6 +34,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class DriverService {
+
+    /** A school has tens of drivers; the cap only bounds abuse. */
+    static final int MAX_DRIVERS_LISTED = 500;
 
     private final DriverProfileRepository driverProfileRepository;
     private final VehicleRepository vehicleRepository;
@@ -55,6 +63,7 @@ public class DriverService {
         var user = userProvisioningService.provision(request.email(), request.phone(), request.password(), Role.DRIVER, schoolId);
         DriverProfile driver = new DriverProfile(user.getId(), schoolId, request.firstName(), request.lastName(),
                 request.phone(), request.licenseNumber(), request.licenseExpiry(), request.baseSalaryMonthly());
+        driver.setAddress(blankToNull(request.address()));
         return DriverResponse.from(driverProfileRepository.save(driver));
     }
 
@@ -103,17 +112,32 @@ public class DriverService {
         return DriverResponse.from(driver);
     }
 
+    /** Capped at 500; allocated-vehicle registration numbers are fetched in one batched query. */
     @Transactional(readOnly = true)
     public List<DriverResponse> listDrivers(Long schoolId) {
         CurrentUserContext.requireSchoolAccess(schoolId);
-        return driverProfileRepository.findBySchoolId(schoolId).stream().map(DriverResponse::from).toList();
+        List<DriverProfile> drivers = driverProfileRepository.findBySchoolId(schoolId,
+                PageRequest.of(0, MAX_DRIVERS_LISTED, Sort.by("firstName", "lastName", "id")));
+        Map<Long, String> vehicleNumbers = vehicleNumbers(drivers);
+        return drivers.stream().map(d -> DriverResponse.from(d, vehicleNumbers.get(d.getVehicleId()))).toList();
     }
 
-    public DriverResponse updateEmploymentStatus(Long schoolId, Long driverId, DriverEmploymentStatus status) {
+    /**
+     * SUSPENDED and TERMINATED require a reason (stored with the time of change); moving back to ACTIVE/ON_LEAVE clears it.
+     * The audit event is published inside the transaction.
+     */
+    public DriverResponse updateEmploymentStatus(Long schoolId, Long driverId, DriverEmploymentStatus status, String reason) {
         CurrentUserContext.requireSchoolAccess(schoolId);
         DriverProfile driver = findWithinSchool(schoolId, driverId);
-        driver.setEmploymentStatus(status);
-        return DriverResponse.from(driver);
+        String cleanReason = blankToNull(reason);
+        if ((status == DriverEmploymentStatus.SUSPENDED || status == DriverEmploymentStatus.TERMINATED) && cleanReason == null) {
+            throw new IllegalArgumentException("A reason is required when setting a driver to " + status);
+        }
+        DriverEmploymentStatus before = driver.getEmploymentStatus();
+        driver.changeEmploymentStatus(status, cleanReason);
+        eventPublisher.publishEvent(AuditEvent.of("DRIVER_EMPLOYMENT_STATUS_CHANGED", "DRIVER_PROFILE", driver.getId(), schoolId,
+                before + " -> " + status + (cleanReason == null ? "" : ": " + cleanReason)));
+        return DriverResponse.from(driver, vehicleNumber(driver));
     }
 
     public DriverResponse updateDriver(Long schoolId, Long driverId, UpdateDriverRequest request) {
@@ -125,14 +149,17 @@ public class DriverService {
         }
         driver.updateDetails(request.firstName(), request.lastName(), request.phone(), request.licenseNumber(),
                 request.licenseExpiry(), request.baseSalaryMonthly());
-        return DriverResponse.from(driver);
+        if (request.address() != null) {
+            driver.setAddress(blankToNull(request.address()));
+        }
+        return DriverResponse.from(driver, vehicleNumber(driver));
     }
 
     /** "Delete" from the UI's perspective - terminating keeps trip/payroll history intact instead of hitting the FK a hard delete would. */
     public void terminateDriver(Long schoolId, Long driverId) {
         CurrentUserContext.requireSchoolAccess(schoolId);
         DriverProfile driver = findWithinSchool(schoolId, driverId);
-        driver.setEmploymentStatus(DriverEmploymentStatus.TERMINATED);
+        driver.changeEmploymentStatus(DriverEmploymentStatus.TERMINATED, "Terminated by school");
         eventPublisher.publishEvent(AuditEvent.of("DRIVER_TERMINATED", "DRIVER_PROFILE", driver.getId(), schoolId,
                 driver.getFirstName() + " " + driver.getLastName() + " terminated"));
     }
@@ -153,6 +180,26 @@ public class DriverService {
         DriverProfile driver = findWithinSchool(schoolId, driverId);
         driver.setInsurancePolicyId(insurancePolicyId);
         return DriverResponse.from(driver);
+    }
+
+    private String vehicleNumber(DriverProfile driver) {
+        return driver.getVehicleId() == null ? null
+                : vehicleRepository.findById(driver.getVehicleId()).map(Vehicle::getRegistrationNumber).orElse(null);
+    }
+
+    private Map<Long, String> vehicleNumbers(List<DriverProfile> drivers) {
+        List<Long> ids = drivers.stream().map(DriverProfile::getVehicleId).filter(Objects::nonNull).distinct().toList();
+        if (ids.isEmpty()) {
+            // Map.of() throws NPE on get(null) - most drivers in this list have no vehicle
+            // assigned (getVehicleId() == null), and the caller looks every driver up by id.
+            return new HashMap<>();
+        }
+        return vehicleRepository.findAllById(ids).stream()
+                .collect(Collectors.toMap(Vehicle::getId, Vehicle::getRegistrationNumber));
+    }
+
+    private static String blankToNull(String s) {
+        return s == null || s.isBlank() ? null : s.trim();
     }
 
     private DriverProfile findWithinSchool(Long schoolId, Long driverId) {

@@ -65,6 +65,36 @@ public class RazorpayOrderService {
         return method != null ? method.toString() : null;
     }
 
+    /**
+     * Razorpay's fetch-order API (https://razorpay.com/docs/api/orders/fetch-with-id/) - the one
+     * other call site PaymentReconciliationService needs: Razorpay's own idea of an order's status
+     * ("created"/"attempted"/"paid") and how much of it has actually been paid, to compare against
+     * what our own Payment row says. Throws PaymentGatewayException (404-shaped, same as any other
+     * failed call) if Razorpay has no record of this order id at all - the caller treats that as
+     * MISSING_AT_GATEWAY.
+     */
+    public RazorpayOrderSnapshot fetchOrder(String orderId) {
+        if (!properties.isEnabled()) {
+            throw new PaymentGatewayException("Razorpay is not configured (set projectx.payment.razorpay.enabled=true with real credentials)");
+        }
+        Map<String, Object> response = httpClient.get("/orders/" + orderId);
+        String status = (String) response.get("status");
+        BigDecimal amount = paiseToRupees(response.get("amount"));
+        BigDecimal amountPaid = paiseToRupees(response.get("amount_paid"));
+        return new RazorpayOrderSnapshot(status, amount, amountPaid);
+    }
+
+    private static BigDecimal paiseToRupees(Object paise) {
+        if (paise == null) {
+            return null;
+        }
+        return BigDecimal.valueOf(((Number) paise).longValue()).movePointLeft(2);
+    }
+
+    /** amount/amountPaid are already converted from paise back to rupees. */
+    public record RazorpayOrderSnapshot(String status, BigDecimal amount, BigDecimal amountPaid) {
+    }
+
     private static String hmacSha256Hex(String payload, String secret) {
         try {
             Mac mac = Mac.getInstance(HMAC_ALGORITHM);

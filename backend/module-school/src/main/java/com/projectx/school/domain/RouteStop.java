@@ -32,6 +32,9 @@ public class RouteStop extends Auditable {
     @Column(name = "radius_meters", nullable = false)
     private int radiusMeters = 150;
 
+    @Column(name = "scheduled_time")
+    private java.time.LocalTime scheduledTime;
+
     protected RouteStop() {
     }
 
@@ -65,5 +68,21 @@ public class RouteStop extends Auditable {
 
     public int getRadiusMeters() {
         return radiusMeters;
+    }
+
+    public java.time.LocalTime getScheduledTime() {
+        return scheduledTime;
+    }
+
+    public void applyDetails(int sequenceNumber, String label, Point location, int radiusMeters, java.time.LocalTime scheduledTime) {
+        this.sequenceNumber = sequenceNumber;
+        this.label = label;
+        this.location = location;
+        this.radiusMeters = radiusMeters;
+        this.scheduledTime = scheduledTime;
+    }
+
+    public void setScheduledTime(java.time.LocalTime scheduledTime) {
+        this.scheduledTime = scheduledTime;
     }
 }

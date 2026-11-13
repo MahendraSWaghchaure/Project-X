@@ -9,5 +9,8 @@ public interface ParentProfileRepository extends JpaRepository<ParentProfile, Lo
 
     Optional<ParentProfile> findByUserId(Long userId);
 
+    /** Profiles for a bounded set of user ids (display-name lookups) - one query. */
+    List<ParentProfile> findByUserIdIn(java.util.Collection<Long> userIds);
+
     List<ParentProfile> findByInvitedBySchoolId(Long schoolId);
 }

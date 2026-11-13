@@ -12,9 +12,11 @@ import com.projectx.people.repo.ChildRepository;
 import com.projectx.people.repo.ParentProfileRepository;
 import com.projectx.people.service.ChildQrTokenService;
 import com.projectx.people.service.GuardianAccessService;
+import com.projectx.tracking.domain.ArrivalOutbox;
 import com.projectx.tracking.domain.ChildTripEvent;
 import com.projectx.tracking.domain.Trip;
 import com.projectx.tracking.dto.ChildTripEventResponse;
+import com.projectx.tracking.repo.ArrivalOutboxRepository;
 import com.projectx.tracking.repo.ChildTripEventRepository;
 import com.projectx.tracking.repo.TripRepository;
 import java.time.Instant;
@@ -42,6 +44,7 @@ public class ChildTripEventService {
 
     private final TripRepository tripRepository;
     private final ChildTripEventRepository childTripEventRepository;
+    private final ArrivalOutboxRepository arrivalOutboxRepository;
     private final ChildRepository childRepository;
     private final ParentProfileRepository parentProfileRepository;
     private final TripService tripService;
@@ -50,11 +53,13 @@ public class ChildTripEventService {
     private final GuardianAccessService guardianAccessService;
 
     public ChildTripEventService(TripRepository tripRepository, ChildTripEventRepository childTripEventRepository,
-                                  ChildRepository childRepository, ParentProfileRepository parentProfileRepository,
+                                  ArrivalOutboxRepository arrivalOutboxRepository, ChildRepository childRepository,
+                                  ParentProfileRepository parentProfileRepository,
                                   TripService tripService, ApplicationEventPublisher eventPublisher,
                                   ChildQrTokenService childQrTokenService, GuardianAccessService guardianAccessService) {
         this.tripRepository = tripRepository;
         this.childTripEventRepository = childTripEventRepository;
+        this.arrivalOutboxRepository = arrivalOutboxRepository;
         this.childRepository = childRepository;
         this.parentProfileRepository = parentProfileRepository;
         this.tripService = tripService;
@@ -114,13 +119,22 @@ public class ChildTripEventService {
                 .stream().map(ChildTripEventResponse::from).toList();
     }
 
+    /**
+     * Persists the event and, in the SAME transaction, a durable outbox row recording "an Arrival
+     * may need to be opened for this" - the outbox write can never be lost separately from the
+     * event it mirrors, closing the gap the old design had (an AFTER_COMMIT listener that might
+     * simply never run, leaving only a 60s sweep as the backstop). See module-attendance's
+     * ArrivalReconciler#processOutbox for the consumer side.
+     */
     private ChildTripEventResponse record(Trip trip, Long childId, ChildTripEventType type, Long confirmedByUserId) {
         if (childTripEventRepository.existsByTripIdAndChildIdAndEventType(trip.getId(), childId, type)) {
             throw new ConflictException(type + " already recorded for this child on this trip");
         }
         ChildTripEvent event = childTripEventRepository.save(new ChildTripEvent(trip.getId(), childId, type, confirmedByUserId));
+        arrivalOutboxRepository.save(new ArrivalOutbox(event.getId(), trip.getId(), childId, trip.getSchoolId(),
+                type.name(), confirmedByUserId, event.getOccurredAt()));
         eventPublisher.publishEvent(new ChildTripStatusChangedEvent(
-                trip.getId(), childId, trip.getSchoolId(), type, confirmedByUserId, Instant.now()));
+                trip.getId(), childId, trip.getSchoolId(), type, confirmedByUserId, event.getOccurredAt()));
         return ChildTripEventResponse.from(event);
     }
 }

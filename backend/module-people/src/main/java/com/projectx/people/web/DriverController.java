@@ -48,7 +48,7 @@ public class DriverController {
     @PatchMapping("/{driverId}/employment-status")
     public ApiResponse<DriverResponse> updateEmploymentStatus(@PathVariable Long schoolId, @PathVariable Long driverId,
                                                                 @Valid @RequestBody UpdateDriverEmploymentStatusRequest request) {
-        return ApiResponse.ok(driverService.updateEmploymentStatus(schoolId, driverId, request.status()));
+        return ApiResponse.ok(driverService.updateEmploymentStatus(schoolId, driverId, request.status(), request.reason()));
     }
 
     @PatchMapping("/{driverId}/verification")

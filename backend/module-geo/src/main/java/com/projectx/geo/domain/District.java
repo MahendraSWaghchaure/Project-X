@@ -26,6 +26,13 @@ public class District extends Auditable {
     @Column(nullable = false)
     private String name;
 
+    /** Representative (district-HQ-town-ish, not surveyed) coordinates - powers B3's onboarding-form map fly-to. */
+    @Column
+    private Double latitude;
+
+    @Column
+    private Double longitude;
+
     protected District() {
     }
 
@@ -33,6 +40,14 @@ public class District extends Auditable {
         this.stateId = stateId;
         this.regionId = regionId;
         this.name = name;
+    }
+
+    public District(Long stateId, Long regionId, String name, Double latitude, Double longitude) {
+        this.stateId = stateId;
+        this.regionId = regionId;
+        this.name = name;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     public Long getId() {
@@ -49,5 +64,13 @@ public class District extends Auditable {
 
     public String getName() {
         return name;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
     }
 }

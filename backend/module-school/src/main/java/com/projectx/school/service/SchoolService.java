@@ -1,5 +1,6 @@
 package com.projectx.school.service;
 
+import com.projectx.common.events.AuditEvent;
 import com.projectx.common.events.SchoolLocationChangedEvent;
 import com.projectx.common.exception.ResourceNotFoundException;
 import com.projectx.common.geo.GeoPoints;
@@ -15,7 +16,14 @@ import com.projectx.school.dto.SchoolResponse;
 import com.projectx.school.dto.UpdateSchoolRequest;
 import com.projectx.school.repo.SchoolAdminProfileRepository;
 import com.projectx.school.repo.SchoolRepository;
+import com.projectx.common.web.PageResponse;
+import com.projectx.school.dto.SchoolStatusCounts;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.util.List;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.locationtech.jts.geom.Point;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -94,12 +102,54 @@ public class SchoolService {
         return SchoolResponse.from(school);
     }
 
-    /** Platform-admin-only: a school can't suspend itself. This is the "delete" a platform admin performs - reversible, data stays intact. */
-    public SchoolResponse setSchoolStatus(Long schoolId, SchoolStatus status) {
+    /**
+     * Platform-admin-only: a school can't suspend itself. This is the "delete" a platform admin performs - reversible,
+     * data stays intact. Suspending requires a reason (shown on the schools list); re-activating clears it.
+     * The audit event is published inside the transaction (AFTER_COMMIT listener) so a rolled-back change leaves no trace.
+     */
+    public SchoolResponse setSchoolStatus(Long schoolId, SchoolStatus status, String reason) {
+        String cleanReason = reason == null || reason.isBlank() ? null : reason.trim();
+        if (status == SchoolStatus.SUSPENDED && cleanReason == null) {
+            throw new IllegalArgumentException("A reason is required when suspending a school");
+        }
         School school = findByIdOrThrow(schoolId);
-        school.setStatus(status);
+        SchoolStatus before = school.getStatus();
+        school.changeStatus(status, cleanReason);
+        eventPublisher.publishEvent(AuditEvent.of("SCHOOL_STATUS_CHANGED", "SCHOOL", schoolId, schoolId,
+                before + " -> " + status + (cleanReason == null ? "" : ": " + cleanReason)));
         return SchoolResponse.from(school);
     }
+
+    /** Platform-admin list with the All | Active | Suspended tabs (status), a name/city search (q) and optional district filter; size capped at 100. */
+    @Transactional(readOnly = true)
+    public PageResponse<SchoolResponse> searchSchools(SchoolStatus status, String q, List<Long> districtIds, Integer page, Integer size) {
+        Specification<School> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (districtIds != null && !districtIds.isEmpty()) {
+                predicates.add(root.get("districtId").in(districtIds));
+            }
+            if (q != null && !q.isBlank()) {
+                String pattern = "%" + q.trim().toLowerCase().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
+                predicates.add(cb.or(cb.like(cb.lower(root.get("name")), pattern, '\\'),
+                        cb.like(cb.lower(root.get("city")), pattern, '\\')));
+            }
+            return cb.and(predicates.toArray(Predicate[]::new));
+        };
+        int pageSize = Math.min(Math.max(size == null ? 20 : size, 1), 100);
+        var pageable = PageRequest.of(Math.max(page == null ? 0 : page, 0), pageSize, Sort.by("name", "id"));
+        return PageResponse.from(schoolRepository.findAll(spec, pageable).map(SchoolResponse::from));
+    }
+
+    @Transactional(readOnly = true)
+    public SchoolStatusCounts statusCounts() {
+        long active = schoolRepository.countByStatus(SchoolStatus.ACTIVE);
+        long suspended = schoolRepository.countByStatus(SchoolStatus.SUSPENDED);
+        return new SchoolStatusCounts(active + suspended, active, suspended);
+    }
+
 
     School findByIdOrThrow(Long schoolId) {
         return schoolRepository.findById(schoolId)

@@ -106,6 +106,9 @@ public class PayrollDisbursementService {
 
         RazorpayPayoutClient.PayoutResult result = payoutClient.createPayout(
                 bankDetail.getRazorpayFundAccountId(), totalPaid, referenceId, narration);
+        // Set before markPaid() so PaymentReconciliationService has a real payout id to fetch-by-id
+        // against Razorpay even once transactionReference has been overwritten with the bank UTR.
+        record.setRazorpayPayoutId(result.payoutId());
         record.markPaid(totalPaid, result.transactionReference());
     }
 }

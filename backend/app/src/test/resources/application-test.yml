@@ -13,3 +13,15 @@ projectx:
       login-per-minute: 500
       refresh-per-minute: 500
       driver-register-per-minute: 500
+      attendance-bulk-per-minute: 500
+      student-import-per-minute: 500
+      arrival-respond-per-minute: 500
+      child-create-per-minute: 500
+      # Phase 2 public endpoints: raised, except in Phase2RateLimitTest which lowers them again to exercise the limiter itself.
+      consent-view-per-minute: 500
+      consent-respond-per-minute: 500
+      inquiry-per-minute: 500
+      consent-link-per-minute: 500
+  consent:
+    # Local/test only: lets the integration tests read the SMS link (no SMS provider exists here). Never enabled in prod.
+    expose-dev-link: true

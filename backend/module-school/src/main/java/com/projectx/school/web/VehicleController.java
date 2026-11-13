@@ -1,6 +1,7 @@
 package com.projectx.school.web;
 
 import com.projectx.common.web.ApiResponse;
+import com.projectx.school.dto.AssignVehicleDriverRequest;
 import com.projectx.school.dto.CreateVehicleRequest;
 import com.projectx.school.dto.LinkInsurancePolicyRequest;
 import com.projectx.school.dto.UpdateVehicleRequest;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -42,6 +44,18 @@ public class VehicleController {
     @GetMapping
     public ApiResponse<List<VehicleResponse>> listVehicles(@PathVariable Long schoolId) {
         return ApiResponse.ok(vehicleService.listVehicles(schoolId));
+    }
+
+    @GetMapping("/{vehicleId}")
+    public ApiResponse<VehicleResponse> getVehicle(@PathVariable Long schoolId, @PathVariable Long vehicleId) {
+        return ApiResponse.ok(vehicleService.getVehicle(schoolId, vehicleId));
+    }
+
+    /** Allocate (or, with a null driverId, release) the vehicle's driver. */
+    @PutMapping("/{vehicleId}/driver")
+    public ApiResponse<VehicleResponse> assignDriver(@PathVariable Long schoolId, @PathVariable Long vehicleId,
+                                                      @RequestBody AssignVehicleDriverRequest request) {
+        return ApiResponse.ok(vehicleService.assignDriver(schoolId, vehicleId, request.driverId()));
     }
 
     @PatchMapping("/{vehicleId}/status")

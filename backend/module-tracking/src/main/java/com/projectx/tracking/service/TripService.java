@@ -4,6 +4,8 @@ import com.projectx.common.exception.ForbiddenOperationException;
 import com.projectx.common.exception.ResourceNotFoundException;
 import com.projectx.common.security.CurrentUserContext;
 import com.projectx.people.domain.Child;
+import com.projectx.people.domain.DriverProfile;
+import com.projectx.people.domain.DriverVerificationStatus;
 import com.projectx.people.domain.ParentProfile;
 import com.projectx.people.repo.ChildRepository;
 import com.projectx.people.repo.DriverProfileRepository;
@@ -60,8 +62,13 @@ public class TripService {
         return TripResponse.from(tripRepository.save(trip));
     }
 
+    /** Blocked if the assigned driver's license has expired (DriverLicenseExpiryReminderJob flips verificationStatus) - see module-people's DriverVerificationStatus. */
     public TripResponse startTrip(Long tripId) {
         Trip trip = findAndAuthorizeAsDriverOrSchoolAdmin(tripId);
+        DriverProfile driver = driverProfileRepository.findById(trip.getDriverId()).orElse(null);
+        if (driver != null && driver.getVerificationStatus() == DriverVerificationStatus.LICENSE_EXPIRED) {
+            throw new ForbiddenOperationException("Driver's license has expired - cannot start a new trip until re-verified");
+        }
         trip.start();
         return TripResponse.from(trip);
     }

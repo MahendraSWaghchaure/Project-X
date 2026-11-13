@@ -147,7 +147,21 @@ projectx:
       key-secret: ${RAZORPAY_KEY_SECRET:}
       payouts-enabled: ${RAZORPAYX_PAYOUTS_ENABLED:false}
       payout-account-number: ${RAZORPAYX_ACCOUNT_NUMBER:}
+    reconciliation:
+      # How far back PaymentReconciliationService looks when comparing our Payment/PayrollRecord
+      # rows against Razorpay's own fetch-order/fetch-payout response - see ReconciliationScheduler
+      # (daily, 04:00) and POST /platform-admin/reconciliation/run for an on-demand trigger.
+      lookback-days: ${PAYMENT_RECONCILIATION_LOOKBACK_DAYS:7}
+      max-admins-notified: ${PAYMENT_RECONCILIATION_MAX_ADMINS_NOTIFIED:20}
 
   bootstrap:
     admin-email: ${PLATFORM_ADMIN_EMAIL:admin@projectx.local}
     admin-password: ${PLATFORM_ADMIN_PASSWORD:changeme123}
+
+  hardware:
+    rate-limit:
+      # Per-device-id caps for POST /hardware/tap and /hardware/telemetry (see
+      # DeviceApiKeyAuthInterceptor/HardwareRateLimiter) - module-hardware, for hardware that does
+      # not exist yet in this deployment (see HardwareIngestController's javadoc).
+      tap-per-minute: ${HARDWARE_TAP_RATE_LIMIT_PER_MINUTE:60}
+      telemetry-per-minute: ${HARDWARE_TELEMETRY_RATE_LIMIT_PER_MINUTE:120}

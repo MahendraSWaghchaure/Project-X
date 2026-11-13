@@ -28,7 +28,7 @@ public class FeeInvoiceController {
     }
 
     @GetMapping("/schools/{schoolId}/fee-invoices")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SCHOOL_ADMIN')")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
     public ApiResponse<PageResponse<FeeInvoiceResponse>> listForSchool(@PathVariable Long schoolId,
             @PageableDefault(size = 30) Pageable pageable) {
         return ApiResponse.ok(feeInvoiceService.listForSchool(schoolId, pageable));

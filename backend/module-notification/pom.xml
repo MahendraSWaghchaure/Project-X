@@ -42,6 +42,13 @@
             <artifactId>twilio</artifactId>
             <version>${twilio.version}</version>
         </dependency>
+        <!-- Real push sender (FirebasePushSender) - built but inactive until projectx.notification.push.enabled=true
+             with a real Firebase service account; see NoOpPushSender's former javadoc / FirebasePushSender. -->
+        <dependency>
+            <groupId>com.google.firebase</groupId>
+            <artifactId>firebase-admin</artifactId>
+            <version>9.4.3</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

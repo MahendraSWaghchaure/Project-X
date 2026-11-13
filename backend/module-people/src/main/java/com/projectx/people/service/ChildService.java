@@ -16,6 +16,7 @@ import com.projectx.people.dto.ChildResponse;
 import com.projectx.people.dto.CreateChildRequest;
 import com.projectx.people.dto.InviteParentRequest;
 import com.projectx.people.dto.InviteParentResponse;
+import com.projectx.people.dto.RelevantDriverResponse;
 import com.projectx.people.dto.UpdateChildRequest;
 import com.projectx.people.repo.ChildRepository;
 import com.projectx.people.repo.DriverProfileRepository;
@@ -23,13 +24,21 @@ import com.projectx.people.repo.ParentProfileRepository;
 import com.projectx.school.domain.Route;
 import com.projectx.school.domain.RouteStop;
 import com.projectx.school.domain.School;
+import com.projectx.school.domain.Vehicle;
 import com.projectx.school.dto.RouteResponse;
 import com.projectx.school.dto.RouteStopResponse;
 import com.projectx.school.repo.RouteRepository;
 import com.projectx.school.repo.RouteStopRepository;
 import com.projectx.school.repo.SchoolRepository;
+import com.projectx.school.repo.VehicleRepository;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import org.locationtech.jts.geom.Point;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
@@ -47,6 +56,7 @@ public class ChildService {
     private final RouteRepository routeRepository;
     private final RouteStopRepository routeStopRepository;
     private final DriverProfileRepository driverProfileRepository;
+    private final VehicleRepository vehicleRepository;
     private final ChildQrTokenService childQrTokenService;
     private final GuardianAccessService guardianAccessService;
     private final ApplicationEventPublisher eventPublisher;
@@ -54,8 +64,9 @@ public class ChildService {
     public ChildService(ChildRepository childRepository, ParentProfileRepository parentProfileRepository,
                          ParentService parentService, SchoolRepository schoolRepository,
                          RouteRepository routeRepository, RouteStopRepository routeStopRepository,
-                         DriverProfileRepository driverProfileRepository, ChildQrTokenService childQrTokenService,
-                         GuardianAccessService guardianAccessService, ApplicationEventPublisher eventPublisher) {
+                         DriverProfileRepository driverProfileRepository, VehicleRepository vehicleRepository,
+                         ChildQrTokenService childQrTokenService, GuardianAccessService guardianAccessService,
+                         ApplicationEventPublisher eventPublisher) {
         this.childRepository = childRepository;
         this.parentProfileRepository = parentProfileRepository;
         this.parentService = parentService;
@@ -63,6 +74,7 @@ public class ChildService {
         this.routeRepository = routeRepository;
         this.routeStopRepository = routeStopRepository;
         this.driverProfileRepository = driverProfileRepository;
+        this.vehicleRepository = vehicleRepository;
         this.childQrTokenService = childQrTokenService;
         this.guardianAccessService = guardianAccessService;
         this.eventPublisher = eventPublisher;
@@ -210,6 +222,49 @@ public class ChildService {
         DriverProfile driver = driverProfileRepository.findById(route.getDriverId())
                 .orElseThrow(() -> ResourceNotFoundException.of("Driver", route.getDriverId()));
         return ChildDriverResponse.from(driver);
+    }
+
+    /**
+     * E3: drivers who actually drive a route carrying one of this parent's children - deduped, not every driver
+     * platform-wide (used to populate the "complaint is against a driver" select on the grievance form).
+     */
+    @Transactional(readOnly = true)
+    public List<RelevantDriverResponse> listRelevantDrivers() {
+        ParentProfile parent = parentService.findByUserIdOrThrow(CurrentUserContext.get().userId());
+        Set<Long> routeIds = new LinkedHashSet<>();
+        for (Child child : childRepository.findByGuardianParentId(parent.getId())) {
+            if (child.getRouteId() != null) {
+                routeIds.add(child.getRouteId());
+            }
+        }
+        if (routeIds.isEmpty()) {
+            return List.of();
+        }
+        List<Route> routes = routeRepository.findAllById(routeIds);
+        Set<Long> vehicleIds = new LinkedHashSet<>();
+        for (Route r : routes) {
+            if (r.getVehicleId() != null) {
+                vehicleIds.add(r.getVehicleId());
+            }
+        }
+        Map<Long, String> registrationByVehicleId = new HashMap<>();
+        for (Vehicle v : vehicleRepository.findAllById(vehicleIds)) {
+            registrationByVehicleId.put(v.getId(), v.getRegistrationNumber());
+        }
+        // A driver can show up on more than one of the parent's children's routes - first route encountered wins the displayed vehicle.
+        Map<Long, String> vehicleNoByDriverId = new LinkedHashMap<>();
+        for (Route r : routes) {
+            if (r.getDriverId() != null) {
+                vehicleNoByDriverId.putIfAbsent(r.getDriverId(), r.getVehicleId() == null ? null : registrationByVehicleId.get(r.getVehicleId()));
+            }
+        }
+        if (vehicleNoByDriverId.isEmpty()) {
+            return List.of();
+        }
+        return driverProfileRepository.findAllById(vehicleNoByDriverId.keySet()).stream()
+                .map(d -> new RelevantDriverResponse(d.getId(), (d.getFirstName() + " " + d.getLastName()).trim(),
+                        vehicleNoByDriverId.get(d.getId())))
+                .toList();
     }
 
     /** The assigned route's stops, for drawing the child's route path on the parent's live-tracking map. */

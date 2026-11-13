@@ -114,7 +114,102 @@ just storage/vacuum overhead), this table is the natural first candidate to move
 purpose-built time-series store, or to a managed Postgres with read replicas serving the
 historical-query side while a dedicated primary absorbs writes.
 
-## 6. What this document is not
+## 6. School attendance and safe-arrival verification (`module-attendance`)
+
+**What it is:** a school roster (`students`, subscribed to Sunju transport or not), classrooms, a
+daily attendance sheet, safe-arrival verification (driver event -> school confirmation -> guardian
+approval), basic assessments/comments, a `TEACHER` role, and a consent-filtered leads listing for
+the platform admin. Flyway range V100-V109. Dependencies are one-way: `module-tracking` only
+publishes `ChildTripStatusChangedEvent` (defined in `common`); `module-attendance` depends on
+tracking/people/school/identity/notification, never the reverse, so there is no cycle.
+
+**Arrival pipeline:** `ChildTripStatusChangedEvent` (AFTER_COMMIT, `@Async` on the dedicated
+`attendanceExecutor`, MDC/`X-Request-Id` carried by `MdcTaskDecorator`) -> `ArrivalService` opens the
+`arrival_verifications` row (BOARDED on a morning trip = HOME_PICKUP, DROPPED_AT_SCHOOL = SCHOOL_DROP,
+PICKED_FROM_SCHOOL = SCHOOL_PICKUP; idempotent on `(trip_id, child_id, kind)`) -> `ArrivalChangedEvent`
+(AFTER_COMMIT) -> `ArrivalNotifier` pushes the Arrival to `/topic/parent/{userId}/arrivals`,
+`/topic/school/{id}/arrivals`, `/topic/trip/{id}/arrivals` through the existing Redis STOMP relay, and
+sends SMS/email/push (all guardians via `GuardianAccessService.allGuardianIds`, plus school admins)
+on a mismatch or dispute. The outcome rule lives in exactly one place, `ArrivalOutcome.compute`.
+Arrival rows are `@Version`ed and updated through a retrying transaction (three actors can race).
+STOMP SUBSCRIBE to these three topics is authorized in `WebSocketAuthChannelInterceptor` (a parent can
+only subscribe to their own user id; staff only to their own school/trip).
+
+**Attendance storage:** `school_attendance` is RANGE-partitioned by month on `attendance_date`
+(PK `(id, attendance_date)`, idempotency key `UNIQUE (student_id, attendance_date)`, indexes
+`(school_id, attendance_date)` and `(student_id, attendance_date)`), with a DEFAULT partition as a
+safety net. It is deliberately not a JPA entity - all access is set-based SQL - so partitioning and
+Hibernate `validate` do not interact. `ensure_school_attendance_partitions()` (called by the V100
+migration for -2..+12 months and daily by `AttendancePartitionJob` for +6 months) creates partitions
+ahead of time; if a month already has rows in the DEFAULT partition Postgres refuses to create it and
+the job logs an error (move those rows manually).
+
+**Scale seams, in order of when they bite:**
+- *Bulk write:* one `INSERT ... SELECT unnest(...) ON CONFLICT ... DO UPDATE ... WHERE status IS DISTINCT FROM`
+  statement per sheet (<= 500 rows, enforced), so a replayed sheet writes nothing. Per-IP rate limits
+  (`RateLimitProperties`: `attendance-bulk-per-minute`, `student-import-per-minute`,
+  `arrival-respond-per-minute`). Swap-in: put the endpoint behind a queue (Kafka/SQS) and have a worker
+  run the same statement.
+- *Reads:* every list is size-capped (max page 100; sheet/bulk 500, over-cap = 400, never silent
+  truncation); the summary is three indexed COUNTs in one statement, cached in Redis for 15s
+  (`projectx.attendance.summary-cache-ttl-seconds`) and evicted on writes. Offset paging is used for the
+  student list (fine at school scale); the platform-wide leads listing is the first thing to move to
+  keyset paging (`id > :last`) if it grows large. Swap-in: point read-only methods at a read replica.
+- *Driver event -> arrival:* the in-process `@Async` hop is the seam a queue/outbox occupies. Known gap:
+  a crash between the driver's commit and the async handler loses that one arrival (the driver event is
+  still recorded); an outbox table fixes it when it matters.
+- *Fan-out:* STOMP via the Redis relay (already multi-instance safe); notifications via
+  `NotificationDispatchService` (its own pool, retries, dead-letter log).
+- *Text search* (`q` on students) is `lower(...) LIKE`, indexed only by `(school_id, classroom_id)`; add
+  `pg_trgm` GIN indexes if a single school ever has tens of thousands of students.
+
+`loadtest/attendance.js` (k6) measures real req/s on whatever box it is pointed at. It measures; it
+does not prove billion-scale.
+
+**Compliance:** students are minors. `marketing_consent` defaults to false, the leads query filters
+`marketing_consent = true AND child_id IS NULL` inside the repository method (no unfiltered path),
+consent changes and every leads listing are audit-logged. Get legal review (India DPDP Act) before
+any outreach.
+
+## 7. Phase 2: platform-owned payments, teacher scoping, guardian consent, public intake
+
+**Payments belong to the platform (B1/B13).** Fee schedules, fee invoices, school payment listings, payroll listings, the
+incentive setter and the whole `/billing/**` admin controller are `PLATFORM_ADMIN`-only; a `SCHOOL_ADMIN` gets 403 on all of
+them and `GET /schools/{id}/dashboard-stats` returns `revenueThisMonth = null`, `payrollPending = payrollFailed = 0` for them.
+Parents still pay the platform (Razorpay) and drivers still see their own payroll. `PayrollService.listForSchool` no longer
+scans the whole table: it reads the newest 500 rows of the school's drivers in SQL.
+
+**Teacher scoping is enforced in one place, `TeacherScope`.** A teacher is class teacher of at most one classroom
+(`classrooms.class_teacher_id`, DB-unique partial index) and lectures in the classrooms where they have
+`timetable_periods`. CLASS_TEACHER: full student details incl. guardian contacts, attendance, comments, assessments of that
+class. LECTURER: assessments only; guardian fields and consent fields are removed from the student payload. No relation: 403.
+School-wide arrival boards (REST and the `/topic/school|trip/**` STOMP topics) are admin-only; teachers get their own
+class alerts instead.
+
+**Teacher alerts (C4).** `ArrivalNotifier.fanOut` (already async on `attendanceExecutor`, MDC-carried) asks
+`TeacherAlertService.onArrivalChanged`; when a SCHOOL_DROP arrival is `school_confirm = ABSENT` it pushes one alert to
+`/topic/teacher/{teacherUserId}/alerts` through the existing Redis relay (JSON in, `byte[]` out in `StompRelaySubscriber`).
+A Redis `SET NX` marker per arrival (24 h) de-duplicates repeated changes and is cleared when the school corrects the mark.
+`WebSocketAuthChannelInterceptor` treats everything under `/topic/teacher/` as deny-by-default: the destination must be exactly
+`/topic/teacher/{positive id}/alerts`, the session must be a TEACHER and the id must be their own.
+
+**Guardian consent (A2)** is a single-use, 48 h SMS link. Only the SHA-256 of the 256-bit token is stored; the SMS body (which
+contains the token) is never written to `notification_records` (the log row gets a redacted body and a masked number).
+Opening the link changes nothing; the answer is one atomic conditional `UPDATE ... WHERE used_at IS NULL AND expires_at > now()`
+so concurrent answers cannot both win. Every failure on the public side is the same generic `410`. A school never receives the
+link (`projectx.consent.expose-dev-link` is a dev/test-only switch, default false). Public endpoints
+(`/public/consent/*`, `/public/consent/*/respond`, `/public/inquiries`) are rate limited per IP by `RateLimitFilter`
+(`consent-view-per-minute` 30, `consent-respond-per-minute` 10, `inquiry-per-minute` 5). The known `X-Forwarded-For` trust issue
+of that filter is unchanged and still needs a proxy that overwrites the header.
+
+**Public inquiries (E4)** live in `module-notification` (`inquiries` table, `POST /public/inquiries`, honeypot field, platform
+admins notified AFTER_COMMIT through the existing dispatcher).
+
+**Cross-module seams added.** `module-school` cannot call `module-people` (the dependency points the other way), so vehicle
+driver/student data goes through the `VehicleDriverGateway` interface implemented in `module-people`; `module-grievance` stays
+a leaf and gets display names and link verification from the `GrievanceDirectory` interface implemented in `app`.
+
+## 8. What this document is not
 
 None of the above makes a single free-tier VM serve literally millions of concurrent users — that
 requires more compute, more database capacity, and a real message broker, which are hosting-tier

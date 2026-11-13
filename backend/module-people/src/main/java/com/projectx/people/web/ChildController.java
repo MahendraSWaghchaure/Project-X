@@ -9,6 +9,7 @@ import com.projectx.people.dto.CreateChildRequest;
 import com.projectx.people.dto.InviteParentRequest;
 import com.projectx.people.dto.InviteParentResponse;
 import com.projectx.people.dto.LinkInsurancePolicyRequest;
+import com.projectx.people.dto.RelevantDriverResponse;
 import com.projectx.people.dto.UpdateChildRequest;
 import com.projectx.people.service.ChildService;
 import com.projectx.school.dto.RouteResponse;
@@ -70,6 +71,13 @@ public class ChildController {
     @PreAuthorize("hasRole('PARENT')")
     public ApiResponse<List<ChildResponse>> listMyChildren() {
         return ApiResponse.ok(childService.listMyChildren());
+    }
+
+    /** E3: drivers who actually drive a route carrying one of this parent's children (deduped) - for the grievance form's "against a driver" select. */
+    @GetMapping("/parents/me/relevant-drivers")
+    @PreAuthorize("hasRole('PARENT')")
+    public ApiResponse<List<RelevantDriverResponse>> relevantDrivers() {
+        return ApiResponse.ok(childService.listRelevantDrivers());
     }
 
     @GetMapping("/parents/me/children/{childId}/driver")

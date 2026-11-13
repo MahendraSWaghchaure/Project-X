@@ -28,6 +28,22 @@
             <groupId>com.projectx</groupId>
             <artifactId>module-people</artifactId>
         </dependency>
+        <!-- For UserAccountRepository (finding the platform admins to notify) - same cross-module
+             dependency module-notification's own InquiryService already uses for the identical
+             reason. No reverse dependency exists (module-identity depends only on common), so this
+             doesn't introduce a cycle. -->
+        <dependency>
+            <groupId>com.projectx</groupId>
+            <artifactId>module-identity</artifactId>
+        </dependency>
+        <!-- For NotificationDispatchService - PaymentReconciliationService routes every mismatch
+             alert through the one existing dispatcher rather than inventing a new notification
+             mechanism. module-notification depends on identity/school/people, never on
+             module-payment, so this doesn't introduce a cycle either. -->
+        <dependency>
+            <groupId>com.projectx</groupId>
+            <artifactId>module-notification</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

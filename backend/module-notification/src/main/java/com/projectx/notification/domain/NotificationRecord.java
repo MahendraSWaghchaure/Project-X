@@ -19,8 +19,13 @@ public class NotificationRecord {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "recipient_user_id", nullable = false)
+    /** Null for messages to a phone number that is not a user account (see recipientContact). */
+    @Column(name = "recipient_user_id")
     private Long recipientUserId;
+
+    /** Masked phone/email for external recipients, e.g. "******3210". */
+    @Column(name = "recipient_contact", length = 64)
+    private String recipientContact;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
@@ -57,6 +62,17 @@ public class NotificationRecord {
 
     public Long getId() {
         return id;
+    }
+
+    public String getRecipientContact() {
+        return recipientContact;
+    }
+
+    public static NotificationRecord external(String maskedContact, NotificationChannel channel, String templateKey, String body,
+                                              NotificationStatus status, String failureReason) {
+        NotificationRecord record = new NotificationRecord(null, channel, templateKey, body, status, failureReason);
+        record.recipientContact = maskedContact;
+        return record;
     }
 
     public Long getRecipientUserId() {

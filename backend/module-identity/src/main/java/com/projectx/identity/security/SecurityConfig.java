@@ -30,11 +30,16 @@ public class SecurityConfig {
             "/auth/login", "/auth/refresh", "/auth/invitations/*/accept",
             "/auth/forgot-password", "/auth/reset-password",
             "/drivers/register",
+            // Public, unauthenticated, rate-limited (RateLimitFilter) - see PublicConsentController / PublicInquiryController.
+            "/public/consent/*", "/public/consent/*/respond", "/public/inquiries",
             "/actuator/health/**", "/actuator/info",
             "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
             "/ws/**",
             // Protected by its own path-embedded shared secret instead of a JWT - see TrackingIngestController.
-            "/tracking/ingest/**"
+            "/tracking/ingest/**",
+            // Protected instead by a per-device API key checked in DeviceApiKeyAuthInterceptor
+            // (module-hardware) - hardware has no user login, so there's no JWT to issue it.
+            "/hardware/**"
     };
 
     @Bean

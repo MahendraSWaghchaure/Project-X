@@ -1,0 +1,69 @@
+name: Backend CI
+
+# This pipeline cannot run yet - nothing in this repo is committed/pushed to a remote. It's written
+# now so it's ready the moment that happens; it is not activated by writing this file.
+on:
+  push:
+    branches: [main]
+    paths: ["backend/**", ".github/workflows/backend-ci.yml"]
+  pull_request:
+    paths: ["backend/**", ".github/workflows/backend-ci.yml"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_USER: projectx
+          POSTGRES_PASSWORD: projectx
+          POSTGRES_DB: projectx_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U projectx"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Build (fail fast on compile errors, before running any test)
+        working-directory: backend
+        run: mvn -B -pl app -am install -DskipTests
+
+      - name: Test (whole backend, against the real Postgres/Redis services above)
+        working-directory: backend
+        run: mvn -B test
+        env:
+          # Matches app/src/test/resources/application-test.yml's expectations - adjust there, not here,
+          # if the test datasource URL/credentials ever change.
+          SPRING_PROFILES_ACTIVE: test
+
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-surefire-reports
+          path: backend/**/target/surefire-reports/*.txt
+          if-no-files-found: ignore
+
+  # A real deploy job belongs here once there's an actual target (the free-tier VM) and a decision on
+  # how it's reached (SSH key, a registry, etc.) - deliberately not stubbed out blind, since a fake
+  # deploy step that "succeeds" without actually deploying anywhere is worse than no step at all.

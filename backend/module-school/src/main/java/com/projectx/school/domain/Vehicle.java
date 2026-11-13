@@ -49,6 +49,19 @@ public class Vehicle extends Auditable {
     @Column(nullable = false, length = 16)
     private VehicleStatus status = VehicleStatus.ACTIVE;
 
+    @Column(name = "owner_name")
+    private String ownerName;
+
+    @Column(name = "owner_phone", length = 32)
+    private String ownerPhone;
+
+    @Column(name = "owner_address", length = 500)
+    private String ownerAddress;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ownership_type", nullable = false, length = 16)
+    private OwnershipType ownershipType = OwnershipType.SCHOOL;
+
     protected Vehicle() {
     }
 
@@ -112,5 +125,31 @@ public class Vehicle extends Auditable {
 
     public void setStatus(VehicleStatus status) {
         this.status = status;
+    }
+
+    public String getOwnerName() {
+        return ownerName;
+    }
+
+    public String getOwnerPhone() {
+        return ownerPhone;
+    }
+
+    public String getOwnerAddress() {
+        return ownerAddress;
+    }
+
+    public OwnershipType getOwnershipType() {
+        return ownershipType;
+    }
+
+    /** {@code ownershipType} null keeps the stored value; the contact fields are replaced as given. */
+    public void setOwner(OwnershipType ownershipType, String ownerName, String ownerPhone, String ownerAddress) {
+        if (ownershipType != null) {
+            this.ownershipType = ownershipType;
+        }
+        this.ownerName = ownerName;
+        this.ownerPhone = ownerPhone;
+        this.ownerAddress = ownerAddress;
     }
 }

@@ -57,6 +57,15 @@ public class PayrollRecord extends Auditable {
     @Column(name = "transaction_reference")
     private String transactionReference;
 
+    /**
+     * The Razorpay payout id itself (e.g. "pout_..."), distinct from transactionReference (which
+     * prefers the bank UTR once assigned - see RazorpayPayoutClient.createPayout). Needed because
+     * reconciliation has to fetch-by-id against Razorpay's payouts API, and a UTR isn't a valid
+     * payout id. Null for any record paid before this column existed, or never paid at all.
+     */
+    @Column(name = "razorpay_payout_id")
+    private String razorpayPayoutId;
+
     @Column(name = "disbursed_at")
     private Instant disbursedAt;
 
@@ -114,6 +123,15 @@ public class PayrollRecord extends Auditable {
 
     public String getTransactionReference() {
         return transactionReference;
+    }
+
+    public String getRazorpayPayoutId() {
+        return razorpayPayoutId;
+    }
+
+    /** Set before markPaid() so the id survives even if the caller only has the UTR-preferring transactionReference. */
+    public void setRazorpayPayoutId(String razorpayPayoutId) {
+        this.razorpayPayoutId = razorpayPayoutId;
     }
 
     public Instant getDisbursedAt() {

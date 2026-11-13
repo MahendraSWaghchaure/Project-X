@@ -81,4 +81,31 @@ public class RazorpayPayoutClient {
 
     public record PayoutResult(String payoutId, String transactionReference, String status) {
     }
+
+    /**
+     * Razorpay's fetch-payout API (https://razorpay.com/docs/x/payouts/api/#fetch-a-payout) - the
+     * one other call site PaymentReconciliationService needs: Razorpay's own idea of a payout's
+     * current status ("processing"/"processed"/"reversed"/"failed"/"queued"/...) and amount, to
+     * compare against what our own PayrollRecord row says. Throws PaymentGatewayException if
+     * Razorpay has no record of this payout id at all - the caller treats that as
+     * MISSING_AT_GATEWAY.
+     */
+    public PayoutSnapshot fetchPayout(String payoutId) {
+        requireEnabled();
+        Map<String, Object> response = httpClient.get("/payouts/" + payoutId);
+        String status = (String) response.get("status");
+        BigDecimal amount = paiseToRupees(response.get("amount"));
+        return new PayoutSnapshot(status, amount);
+    }
+
+    private static BigDecimal paiseToRupees(Object paise) {
+        if (paise == null) {
+            return null;
+        }
+        return BigDecimal.valueOf(((Number) paise).longValue()).movePointLeft(2);
+    }
+
+    /** amount is already converted from paise back to rupees. */
+    public record PayoutSnapshot(String status, BigDecimal amount) {
+    }
 }

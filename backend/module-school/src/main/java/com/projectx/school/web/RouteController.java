@@ -4,6 +4,7 @@ import com.projectx.common.web.ApiResponse;
 import com.projectx.school.dto.AssignRouteRequest;
 import com.projectx.school.dto.CreateRouteRequest;
 import com.projectx.school.dto.RouteResponse;
+import com.projectx.school.dto.UpdateRouteRequest;
 import com.projectx.school.dto.UpdateRouteZoneRequest;
 import com.projectx.school.service.RouteService;
 import jakarta.validation.Valid;
@@ -45,6 +46,12 @@ public class RouteController {
     @GetMapping("/{routeId}")
     public ApiResponse<RouteResponse> getRoute(@PathVariable Long schoolId, @PathVariable Long routeId) {
         return ApiResponse.ok(routeService.getRoute(schoolId, routeId));
+    }
+
+    @PutMapping("/{routeId}")
+    public ApiResponse<RouteResponse> updateRoute(@PathVariable Long schoolId, @PathVariable Long routeId,
+                                                   @Valid @RequestBody UpdateRouteRequest request) {
+        return ApiResponse.ok(routeService.updateRoute(schoolId, routeId, request));
     }
 
     @PutMapping("/{routeId}/assignment")

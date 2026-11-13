@@ -29,13 +29,13 @@ public class PayrollController {
     }
 
     @GetMapping("/schools/{schoolId}/payroll")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SCHOOL_ADMIN')")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
     public ApiResponse<List<PayrollRecordResponse>> listForSchool(@PathVariable Long schoolId) {
         return ApiResponse.ok(payrollService.listForSchool(schoolId));
     }
 
     @PatchMapping("/schools/{schoolId}/payroll/drivers/{driverId}/incentive")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SCHOOL_ADMIN')")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
     public ApiResponse<PayrollRecordResponse> setIncentive(@PathVariable Long schoolId, @PathVariable Long driverId,
                                                              @Valid @RequestBody SetIncentiveRequest request) {
         return ApiResponse.ok(payrollService.setIncentive(schoolId, driverId, request.incentiveAmount()));

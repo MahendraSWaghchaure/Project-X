@@ -26,6 +26,13 @@ public class State extends Auditable {
     @Column(length = 8)
     private String code;
 
+    /** Representative (state-centroid-ish, not surveyed) coordinates - powers B3's onboarding-form map fly-to. */
+    @Column
+    private Double latitude;
+
+    @Column
+    private Double longitude;
+
     protected State() {
     }
 
@@ -33,6 +40,14 @@ public class State extends Auditable {
         this.countryId = countryId;
         this.name = name;
         this.code = code;
+    }
+
+    public State(Long countryId, String name, String code, Double latitude, Double longitude) {
+        this.countryId = countryId;
+        this.name = name;
+        this.code = code;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     public Long getId() {
@@ -49,5 +64,13 @@ public class State extends Auditable {
 
     public String getCode() {
         return code;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
     }
 }

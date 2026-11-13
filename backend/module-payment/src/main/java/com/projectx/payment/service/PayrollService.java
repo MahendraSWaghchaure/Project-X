@@ -14,12 +14,16 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
 public class PayrollService {
+
+    static final int MAX_PAYROLL_LISTED = 500;
 
     private final PayrollRecordRepository payrollRecordRepository;
     private final DriverProfileRepository driverProfileRepository;
@@ -41,10 +45,13 @@ public class PayrollService {
         CurrentUserContext.requireSchoolAccess(schoolId);
         Set<Long> driverIds = driverProfileRepository.findBySchoolId(schoolId).stream()
                 .map(DriverProfile::getId).collect(Collectors.toSet());
-        return payrollRecordRepository.findAll().stream()
-                .filter(record -> driverIds.contains(record.getDriverId()))
-                .sorted((a, b) -> b.getPeriodStart().compareTo(a.getPeriodStart()))
-                .map(PayrollRecordResponse::from).toList();
+        if (driverIds.isEmpty()) {
+            return List.of();
+        }
+        // Newest 500 rows of this school's drivers, in SQL - never a full-table scan of every school's payroll.
+        return payrollRecordRepository.findByDriverIdIn(driverIds,
+                        PageRequest.of(0, MAX_PAYROLL_LISTED, Sort.by(Sort.Order.desc("periodStart"), Sort.Order.desc("id"))))
+                .stream().map(PayrollRecordResponse::from).toList();
     }
 
     /** School admin sets the "covered another driver's route during a breakdown" bonus before the month's payroll run. */

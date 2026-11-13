@@ -44,10 +44,11 @@ class SchoolLifecycleTest extends IntegrationTestBase {
         assertThat(updateResponse.getBody().data().name()).isEqualTo("Renamed School");
 
         ResponseEntity<ApiResponse<SchoolResponse>> suspendResponse = exchange(
-                "/schools/" + school.id() + "/status", HttpMethod.PATCH, new UpdateSchoolStatusRequest(SchoolStatus.SUSPENDED),
+                "/schools/" + school.id() + "/status", HttpMethod.PATCH, new UpdateSchoolStatusRequest(SchoolStatus.SUSPENDED, "Fees overdue"),
                 platformToken, new ParameterizedTypeReference<>() {});
         assertSuccess(suspendResponse);
         assertThat(suspendResponse.getBody().data().status()).isEqualTo(SchoolStatus.SUSPENDED);
+        assertThat(suspendResponse.getBody().data().statusReason()).isEqualTo("Fees overdue");
     }
 
     @Test

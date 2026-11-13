@@ -9,5 +9,8 @@ public interface SchoolAdminProfileRepository extends JpaRepository<SchoolAdminP
 
     Optional<SchoolAdminProfile> findByUserId(Long userId);
 
+    /** Profiles for a bounded set of user ids (display-name lookups) - one query. */
+    List<SchoolAdminProfile> findByUserIdIn(java.util.Collection<Long> userIds);
+
     List<SchoolAdminProfile> findBySchoolId(Long schoolId);
 }

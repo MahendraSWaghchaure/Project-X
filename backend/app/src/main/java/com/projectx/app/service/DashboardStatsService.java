@@ -99,16 +99,22 @@ public class DashboardStatsService {
         Instant monthStart = thisMonth.atDay(1).atStartOfDay(INDIA_ZONE).toInstant();
         Instant monthEndExclusive = thisMonth.plusMonths(1).atDay(1).atStartOfDay(INDIA_ZONE).toInstant();
 
+        // Fees and driver payouts belong to the platform (B1/B13): a school admin gets no payment or payroll numbers at all.
+        boolean platform = CurrentUserContext.get().isPlatformAdmin();
+
         // PayrollRecord has no schoolId of its own (see PayrollRecordRepository) - resolve the
         // school's driver ids first, a set bounded by one school's headcount, not the whole platform.
-        List<Long> driverIds = driverProfileRepository.findBySchoolId(schoolId).stream().map(DriverProfile::getId).toList();
+        List<Long> driverIds = platform
+                ? driverProfileRepository.findBySchoolId(schoolId).stream().map(DriverProfile::getId).toList()
+                : List.of();
         long payrollPending = driverIds.isEmpty() ? 0
                 : payrollRecordRepository.countByDriverIdInAndStatusIn(driverIds, PENDING_PAYROLL_STATUSES);
         long payrollFailed = driverIds.isEmpty() ? 0
                 : payrollRecordRepository.countByDriverIdInAndStatusIn(driverIds, List.of(PayrollStatus.FAILED));
 
-        BigDecimal revenueThisMonth = paymentRepository.sumAmountForSchoolByStatusBetween(
-                schoolId, PaymentStatus.SUCCESS, monthStart, monthEndExclusive);
+        BigDecimal revenueThisMonth = platform
+                ? paymentRepository.sumAmountForSchoolByStatusBetween(schoolId, PaymentStatus.SUCCESS, monthStart, monthEndExclusive)
+                : null;
 
         return new SchoolDashboardStatsResponse(
                 vehicleRepository.countBySchoolId(schoolId),

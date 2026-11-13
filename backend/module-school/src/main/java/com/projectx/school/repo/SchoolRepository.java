@@ -5,8 +5,9 @@ import com.projectx.school.domain.SchoolStatus;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface SchoolRepository extends JpaRepository<School, Long> {
+public interface SchoolRepository extends JpaRepository<School, Long>, JpaSpecificationExecutor<School> {
     long countByStatus(SchoolStatus status);
 
     /** Backs the platform-admin location filter - the frontend resolves a Country/State/Region selection down to a set of district ids (via /geo/districts) before calling this, so module-school never needs to depend on module-geo itself. */

@@ -1,6 +1,6 @@
 package com.projectx.notification.sender;
 
-/** No real implementation yet - wire a Firebase Cloud Messaging sender here once a service-account credential exists. See NoOpPushSender. */
+/** See {@link FirebasePushSender} - the sole implementation, disabled (behaves as a no-op) until real Firebase credentials are configured. */
 public interface PushSender {
     void send(Long recipientUserId, String title, String body);
 }

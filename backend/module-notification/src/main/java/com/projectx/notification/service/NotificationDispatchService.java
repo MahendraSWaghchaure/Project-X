@@ -63,6 +63,37 @@ public class NotificationDispatchService {
         attempt(recipientUserId, NotificationChannel.EMAIL, templateKey, body, () -> emailSender.send(user.getEmail(), subject, body));
     }
 
+    /**
+     * SMS to a phone number that is not a user account (a guardian on the roster). Same retry/log pipeline as dispatch(),
+     * SMS channel only, and the log row carries {@code loggedBody} (never the real body) plus a masked number - so a secret
+     * embedded in the message (a single-use consent link) is not persisted in notification_records.
+     */
+    @Async("notificationExecutor")
+    public void dispatchSmsToNumber(String phone, String templateKey, String body, String loggedBody) {
+        NotificationStatus status;
+        String failureReason = null;
+        try {
+            retryingChannelDispatcher.send(() -> smsSender.send(phone, body));
+            status = NotificationStatus.SENT;
+        } catch (ChannelNotConfiguredException e) {
+            status = NotificationStatus.SKIPPED_NOT_CONFIGURED;
+            failureReason = e.getMessage();
+        } catch (Exception e) {
+            log.error("External SMS dispatch exhausted retries: template={}", templateKey, e);
+            status = NotificationStatus.DEAD_LETTERED;
+            failureReason = e.getMessage();
+        }
+        notificationRecordRepository.save(NotificationRecord.external(maskPhone(phone), NotificationChannel.SMS, templateKey,
+                loggedBody, status, failureReason));
+    }
+
+    static String maskPhone(String phone) {
+        if (phone == null || phone.length() <= 4) {
+            return "****";
+        }
+        return "*".repeat(phone.length() - 4) + phone.substring(phone.length() - 4);
+    }
+
     /** Notifications every retry attempt failed for - the human-in-the-loop worklist for a real outage, not a transient blip. */
     @Transactional(readOnly = true)
     public List<NotificationRecord> listDeadLettered() {

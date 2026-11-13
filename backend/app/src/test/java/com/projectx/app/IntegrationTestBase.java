@@ -64,6 +64,23 @@ public abstract class IntegrationTestBase {
         return restTemplateInstance;
     }
 
+    /** The JWT subject (= users.id) without verifying the signature - test-side convenience only. */
+    protected static Long jwtSubject(String jwt) {
+        String payload = new String(java.util.Base64.getUrlDecoder().decode(jwt.split("\\.")[1]));
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"sub\"\\s*:\\s*\"?(\\d+)").matcher(payload);
+        if (!m.find()) {
+            throw new AssertionError("no sub in " + payload);
+        }
+        return Long.valueOf(m.group(1));
+    }
+
+    /** Makes the teacher (identified by their token) the class teacher of the classroom - the precondition for marking attendance since phase 2. */
+    protected void makeClassTeacher(Long schoolId, Long classroomId, String adminToken, String teacherToken) {
+        ResponseEntity<ApiResponse<Object>> response = exchange("/schools/" + schoolId + "/classrooms/" + classroomId + "/class-teacher",
+                HttpMethod.PUT, java.util.Map.of("teacherId", jwtSubject(teacherToken)), adminToken, new ParameterizedTypeReference<>() {});
+        assertSuccess(response);
+    }
+
     /** Every test that needs unique data (emails, license/registration numbers) suffixes with this - tests share one long-lived database. */
     protected String unique(String prefix) {
         return prefix + UUID.randomUUID().toString().substring(0, 8);
@@ -89,6 +106,18 @@ public abstract class IntegrationTestBase {
         }
         HttpEntity<Object> entity = new HttpEntity<>(body, headers);
         return restTemplate().exchange("http://localhost:" + port + path, method, entity, responseType);
+    }
+
+    /** Same as exchange, with extra request headers (e.g. a distinct X-Forwarded-For so a rate-limit test gets its own bucket). */
+    protected <T> ResponseEntity<ApiResponse<T>> exchangeWithHeaders(String path, HttpMethod method, Object body, String bearerToken,
+                                                                        java.util.Map<String, String> extraHeaders,
+                                                                        ParameterizedTypeReference<ApiResponse<T>> responseType) {
+        HttpHeaders headers = new HttpHeaders();
+        if (bearerToken != null) {
+            headers.setBearerAuth(bearerToken);
+        }
+        extraHeaders.forEach(headers::set);
+        return restTemplate().exchange("http://localhost:" + port + path, method, new HttpEntity<>(body, headers), responseType);
     }
 
     protected <T> void assertSuccess(ResponseEntity<ApiResponse<T>> response) {

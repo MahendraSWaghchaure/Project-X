@@ -63,7 +63,7 @@ public class PaymentController {
     }
 
     @GetMapping("/schools/{schoolId}/payments")
-    @PreAuthorize("hasAnyRole('PLATFORM_ADMIN', 'SCHOOL_ADMIN')")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
     public ApiResponse<PageResponse<PaymentResponse>> listForSchool(@PathVariable Long schoolId,
             @PageableDefault(size = 30) Pageable pageable) {
         return ApiResponse.ok(paymentService.listForSchool(schoolId, pageable));
