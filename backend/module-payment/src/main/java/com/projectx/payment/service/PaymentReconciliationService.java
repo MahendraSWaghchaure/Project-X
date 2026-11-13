@@ -1,4 +1,4 @@
-﻿package com.projectx.payment.service;
+package com.projectx.payment.service;
 
 import com.projectx.common.security.Role;
 import com.projectx.identity.domain.UserAccount;
