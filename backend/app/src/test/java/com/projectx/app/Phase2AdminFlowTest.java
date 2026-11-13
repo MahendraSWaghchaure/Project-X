@@ -122,15 +122,19 @@ class Phase2AdminFlowTest extends SchoolAttendanceTestKit {
         assertThat(result.statusReason()).isEqualTo("Unpaid platform fees");
         assertThat(result.statusChangedAt()).isNotNull();
 
+        // q=tag scopes this to the 2 schools this test itself just created - see the class-level
+        // comment on why an unscoped page scan isn't safe (this exact assertion previously scanned
+        // an unfiltered page and failed once enough sibling tests in the same suite run had created
+        // enough alphabetically-earlier schools to fill page 0 before this test's own school appeared).
         PageResponse<SchoolResponse> onlySuspended = ok(this.<PageResponse<SchoolResponse>>exchange(
-                "/platform-admin/schools?status=SUSPENDED&size=100", HttpMethod.GET, null, platform, new ParameterizedTypeReference<>() {}));
+                "/platform-admin/schools?status=SUSPENDED&q=" + tag + "&size=100", HttpMethod.GET, null, platform, new ParameterizedTypeReference<>() {}));
         assertThat(onlySuspended.content()).isNotEmpty().allMatch(s -> s.status() == SchoolStatus.SUSPENDED);
         assertThat(onlySuspended.content()).filteredOn(s -> s.id().equals(suspended)).singleElement()
                 .extracting(SchoolResponse::statusReason).isEqualTo("Unpaid platform fees");
         assertThat(onlySuspended.content()).noneMatch(s -> s.id().equals(active));
 
         PageResponse<SchoolResponse> onlyActive = ok(this.<PageResponse<SchoolResponse>>exchange(
-                "/platform-admin/schools?status=ACTIVE&size=100", HttpMethod.GET, null, platform, new ParameterizedTypeReference<>() {}));
+                "/platform-admin/schools?status=ACTIVE&q=" + tag + "&size=100", HttpMethod.GET, null, platform, new ParameterizedTypeReference<>() {}));
         assertThat(onlyActive.content()).allMatch(s -> s.status() == SchoolStatus.ACTIVE);
         assertThat(onlyActive.content()).anyMatch(s -> s.id().equals(active)).noneMatch(s -> s.id().equals(suspended));
 

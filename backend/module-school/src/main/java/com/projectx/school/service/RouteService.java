@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -45,16 +46,20 @@ public class RouteService {
     private final RouteStopRepository routeStopRepository;
     private final VehicleRepository vehicleRepository;
     private final ApplicationEventPublisher eventPublisher;
+    /** Same optional cross-module seam VehicleService uses - see VehicleDriverGateway's own javadoc. */
+    private final ObjectProvider<VehicleDriverGateway> driverGateway;
 
     @PersistenceContext
     private EntityManager entityManager;
 
     public RouteService(RouteRepository routeRepository, RouteStopRepository routeStopRepository,
-                        VehicleRepository vehicleRepository, ApplicationEventPublisher eventPublisher) {
+                        VehicleRepository vehicleRepository, ApplicationEventPublisher eventPublisher,
+                        ObjectProvider<VehicleDriverGateway> driverGateway) {
         this.routeRepository = routeRepository;
         this.routeStopRepository = routeStopRepository;
         this.vehicleRepository = vehicleRepository;
         this.eventPublisher = eventPublisher;
+        this.driverGateway = driverGateway;
     }
 
     public RouteResponse createRoute(Long schoolId, CreateRouteRequest request) {
@@ -96,11 +101,22 @@ public class RouteService {
         return detail(route);
     }
 
+    /**
+     * Assigning a route's driver must also allocate that driver to the route's vehicle - otherwise
+     * Route.driverId and the vehicle-side driver link (resolved from DriverProfile.vehicleId; see
+     * VehicleDriverGateway) silently disagree: the route shows a driver, but the Vehicles page the
+     * same driver should appear on does not, because nothing ever told the vehicle side. Both
+     * fields on AssignRouteRequest are @NotNull, so this always has a concrete pair to sync.
+     */
     public RouteResponse assignRoute(Long schoolId, Long routeId, AssignRouteRequest request) {
         CurrentUserContext.requireSchoolAccess(schoolId);
         Route route = findWithinSchool(schoolId, routeId);
         route.setVehicleId(request.vehicleId());
         route.setDriverId(request.driverId());
+        VehicleDriverGateway gateway = driverGateway.getIfAvailable();
+        if (gateway != null) {
+            gateway.assignDriver(schoolId, request.vehicleId(), request.driverId());
+        }
         return detail(route);
     }
 

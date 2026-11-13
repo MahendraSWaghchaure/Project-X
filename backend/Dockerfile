@@ -28,6 +28,10 @@ COPY module-notification/pom.xml module-notification/
 COPY module-insurance/pom.xml module-insurance/
 COPY module-payment/pom.xml module-payment/
 COPY module-grievance/pom.xml module-grievance/
+COPY module-audit/pom.xml module-audit/
+COPY module-geo/pom.xml module-geo/
+COPY module-attendance/pom.xml module-attendance/
+COPY module-hardware/pom.xml module-hardware/
 COPY app/pom.xml app/
 RUN mvn -q -B dependency:go-offline || true
 
@@ -40,6 +44,10 @@ COPY module-notification module-notification
 COPY module-insurance module-insurance
 COPY module-payment module-payment
 COPY module-grievance module-grievance
+COPY module-audit module-audit
+COPY module-geo module-geo
+COPY module-attendance module-attendance
+COPY module-hardware module-hardware
 COPY app app
 
 RUN mvn -q -B -pl app -am -DskipTests package \
