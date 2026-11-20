@@ -1,0 +1,39 @@
+name: projectx-oracle-test
+
+# Backend-only Oracle VM deploy: Postgres (Neon) and Redis (Upstash) are external managed
+# free-tier services, not containers here - this is NOT the full self-hosted stack described in
+# DEPLOY.md/docker-compose.prod.yml. Every secret (DB_URL, REDIS_*, JWT keys, etc.) comes from
+# Infisical via backend/entrypoint.sh at container start, same as the Render test deploy - only
+# the four INFISICAL_* bootstrap values and DOMAIN live in this VM's .env file.
+
+services:
+  app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      INFISICAL_CLIENT_ID: ${INFISICAL_CLIENT_ID:?set in .env}
+      INFISICAL_CLIENT_SECRET: ${INFISICAL_CLIENT_SECRET:?set in .env}
+      INFISICAL_PROJECT_ID: ${INFISICAL_PROJECT_ID:?set in .env}
+      INFISICAL_ENV: ${INFISICAL_ENV:-prod}
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env - see DEPLOY.md Part 2 for the free sslip.io option if you don't have a real one yet}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - projectx-oracle-test-caddy-data:/data
+      - projectx-oracle-test-caddy-config:/config
+
+volumes:
+  projectx-oracle-test-caddy-data:
+  projectx-oracle-test-caddy-config:

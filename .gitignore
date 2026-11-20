@@ -11,6 +11,7 @@ target/
 .env.*
 !.env.example
 !.env.prod.example
+!.env.oracle-test.example
 **/application-local.yml
 **/application-local.yaml
 *.pem
