@@ -56,6 +56,11 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+      # Unset/false by default so docker-compose.prod.yml's unauthenticated internal-network Redis
+      # keeps working untouched - a hosted free-tier Redis (e.g. Upstash) requires both.
+      password: ${REDIS_PASSWORD:}
+      ssl:
+        enabled: ${REDIS_SSL_ENABLED:false}
 
   mail:
     host: ${SMTP_HOST:}
