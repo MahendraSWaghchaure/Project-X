@@ -57,19 +57,25 @@ RUN mvn -q -B -pl app -am -DskipTests package \
 FROM eclipse-temurin:25-jre AS runtime
 WORKDIR /app
 
-# curl is only here for the HEALTHCHECK below - not in the base image otherwise.
+# curl is for the HEALTHCHECK below. The Infisical CLI is only exercised by entrypoint.sh when
+# INFISICAL_CLIENT_ID is set (the Render free-tier test deploy, which fetches every other secret
+# from Infisical instead of Render's env var dashboard) - harmless but unused on the Oracle VM
+# deploy, which never sets that var.
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && curl -1sLf 'https://artifacts-cli.infisical.com/setup.deb.sh' | bash \
+    && apt-get update && apt-get install -y infisical \
     && rm -rf /var/lib/apt/lists/*
 
 # No fixed --uid: eclipse-temurin's base image already claims 1000 for its own default user,
 # and useradd fails outright on a collision rather than picking the next free one itself.
 RUN useradd --system --create-home projectx
 COPY --from=build /workspace/app.jar app.jar
-RUN chown projectx:projectx app.jar
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chown projectx:projectx app.jar entrypoint.sh && chmod +x entrypoint.sh
 USER projectx
 
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=5 \
     CMD curl -f http://localhost:8080/actuator/health || exit 1
 
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["/app/entrypoint.sh"]
